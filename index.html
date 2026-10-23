@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pensumbørs – kjøp og selg brukte pensumbøker</title>
+<style>
+  /* ========== FARGER OG GRUNNOPPSETT ========== */
+  :root {
+    --gronn: #1D4A38;          /* dyp grønn – hovedfarge */
+    --gronn-mork: #133326;
+    --gronn-lys: #E2EBE3;
+    --bakgrunn: #F8F4EC;       /* varm off-white */
+    --kort: #FFFDF8;
+    --tekst: #1E2A23;
+    --tekst-dempet: #5D6A62;
+    --kant: #E5DDCF;
+    --messing: #B8935A;        /* liten varm aksent */
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bakgrunn);
+    color: var(--tekst);
+    line-height: 1.5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ========== TOPPFELT (HEADER) ========== */
+  .topp {
+    background: var(--gronn);
+    color: var(--bakgrunn);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 0 var(--gronn-mork);
+  }
+  .topp-innhold {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 14px 20px 16px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+  .logo {
+    font-family: var(--serif);
+    font-size: 1.65rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--bakgrunn);
+    text-decoration: none;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  /* Liten bokstabel laget med CSS – ingen bilder */
+  .logo-merke {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .logo-merke span {
+    display: block;
+    height: 5px;
+    border-radius: 1px;
+    background: var(--bakgrunn);
+  }
+  .logo-merke span:nth-child(1) { width: 18px; margin-left: 3px; }
+  .logo-merke span:nth-child(2) { width: 22px; background: var(--messing); }
+  .logo-merke span:nth-child(3) { width: 20px; margin-left: 1px; }
+
+  .sok {
+    flex: 1;
+    position: relative;
+  }
+  .sok svg {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    color: var(--tekst-dempet);
+    pointer-events: none;
+  }
+  .sok input {
+    width: 100%;
+    font: inherit;
+    font-size: 1rem;
+    padding: 12px 16px 12px 42px;
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background: var(--bakgrunn);
+    color: var(--tekst);
+  }
+  .sok input::placeholder { color: var(--tekst-dempet); }
+  .sok input:focus {
+    outline: none;
+    border-color: var(--messing);
+  }
+
+  /* ========== HOVEDINNHOLD ========== */
+  main {
+    flex: 1;
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 28px 20px 48px;
+  }
+  .overskrift-rad {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .overskrift-rad h1 {
+    font-family: var(--serif);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gronn);
+  }
+  .antall {
+    color: var(--tekst-dempet);
+    font-size: 0.95rem;
+  }
+
+  /* ========== RUTENETT MED ANNONSEKORT ========== */
+  .rutenett {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 20px;
+  }
+
+  .kort {
+    background: var(--kort);
+    border: 1px solid var(--kant);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* "Bokomslag" – plassholder i stedet for bilde */
+  .omslag {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-left: 22px; /* plass til bokryggen */
+    overflow: hidden;
+  }
+  /* Bokrygg til venstre */
+  .omslag::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 16px;
+    background: rgba(0, 0, 0, 0.22);
+    box-shadow: 2px 0 0 rgba(255, 255, 255, 0.12);
+  }
+  /* Svak tekstilstruktur, som et stoffomslag */
+  .omslag::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(90deg, rgba(0,0,0,0.04) 0 1px, transparent 1px 3px);
+    pointer-events: none;
+  }
+  .omslag-tittel {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    color: #FBF7EF;
+    border-top: 1px solid rgba(251, 247, 239, 0.55);
+    border-bottom: 1px solid rgba(251, 247, 239, 0.55);
+    padding: 8px 14px;
+  }
+  .omslag-kode {
+    font-family: var(--serif);
+    font-size: 1.45rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    display: block;
+  }
+
+  .kort-innhold {
+    padding: 14px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+  }
+  .kort-tittel {
+    font-family: var(--serif);
+    font-size: 1.08rem;
+    font-weight: 700;
+    line-height: 1.3;
+    /* maks to linjer med tittel */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .kort-kode {
+    align-self: flex-start;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--gronn);
+    background: var(--gronn-lys);
+    padding: 2px 9px;
+    border-radius: 6px;
+  }
+  .kort-pris {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--gronn-mork);
+    margin-top: auto;
+    padding-top: 6px;
+  }
+  .kort-detaljer {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.88rem;
+    color: var(--tekst-dempet);
+  }
+  .kort-detaljer .sted {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .kort-detaljer svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+  /* Tom tilstand – når søket ikke gir treff */
+  .tomt {
+    text-align: center;
+    padding: 56px 20px;
+    color: var(--tekst-dempet);
+    border: 2px dashed var(--kant);
+    border-radius: 12px;
+  }
+  .tomt strong {
+    display: block;
+    font-family: var(--serif);
+    font-size: 1.2rem;
+    color: var(--tekst);
+    margin-bottom: 6px;
+  }
+
+  footer {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--tekst-dempet);
+    padding: 20px;
+    border-top: 1px solid var(--kant);
+  }
+
+  /* ========== MOBILTILPASNING ========== */
+  @media (max-width: 640px) {
+    .topp-innhold {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
+      padding: 12px 16px 14px;
+    }
+    .logo { font-size: 1.4rem; }
+    main { padding: 20px 14px 40px; }
+    .overskrift-rad h1 { font-size: 1.25rem; }
+    .rutenett {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .omslag { padding-left: 16px; }
+    .omslag::before { width: 11px; }
+    .omslag-kode { font-size: 1.05rem; }
+    .omslag-tittel { padding: 6px 8px; }
+    .kort-innhold { padding: 10px 12px 12px; }
+    .kort-tittel { font-size: 0.95rem; }
+    .kort-pris { font-size: 1.08rem; }
+    .kort-detaljer { flex-direction: column; gap: 2px; font-size: 0.82rem; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topp">
+  <div class="topp-innhold">
+    <a href="#" class="logo" aria-label="Pensumbørs – til forsiden">
+      <span class="logo-merke" aria-hidden="true"><span></span><span></span><span></span></span>
+      Pensumbørs
+    </a>
+    <div class="sok">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"></circle><line x1="16.5" y1="16.5" x2="21" y2="21"></line>
+      </svg>
+      <input
+        type="search"
+        id="sokefelt"
+        placeholder="Søk etter emnekode eller boktittel"
+        aria-label="Søk etter emnekode eller boktittel"
+        autocomplete="off"
+        enterkeyhint="search">
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="overskrift-rad">
+    <h1>Brukte pensumbøker</h1>
+    <span class="antall" id="antall" aria-live="polite"></span>
+  </div>
+  <div class="rutenett" id="rutenett"></div>
+</main>
+
+<footer>
+  Pensumbørs er et studentprosjekt. Annonsene lagres i nettleseren din.
+</footer>
+
+<script>
+  // ========== EKSEMPELANNONSER ==========
+  // Brukes første gang appen åpnes (når det ikke finnes lagrede annonser ennå).
+  const EKSEMPELANNONSER = [
+    {
+      id: "a1",
+      tittel: "Filosofihistorie",
+      forfatter: "Gunnar Skirbekk og Nils Gilje",
+      emnekode: "EXPHIL03",
+      pris: 250,
+      tilstand: "God",
+      by: "Oslo",
+      beskrivelse: "Noen understrekninger med blyant i de første kapitlene. Ellers fin.",
+      selger: "Ingrid",
+      dato: "2026-10-18",
+      status: "Til salgs"
+    },
+    {
+      id: "a2",
+      tittel: "Principles of Economics",
+      forfatter: "N. Gregory Mankiw",
+      emnekode: "ECON1210",
+      pris: 450,
+      tilstand: "Brukt",
+      by: "Oslo",
+      beskrivelse: "Internasjonal utgave. Litt slitt omslag, men alle sider er hele.",
+      selger: "Magnus",
+      dato: "2026-10-15",
+      status: "Til salgs"
+    },
+    {
+      id: "a3",
+      tittel: "Kalkulus",
+      forfatter: "Tom Lindstrøm",
+      emnekode: "MAT1100",
+      pris: 380,
+      tilstand: "Som ny",
+      by: "Oslo",
+      beskrivelse: "Kjøpt i høst, men byttet studieretning. Ingen notater i boka.",
+      selger: "Sara",
+      dato: "2026-10-20",
+      status: "Til salgs"
+    },
+    {
+      id: "a4",
+      tittel: "Python Crash Course",
+      forfatter: "Eric Matthes",
+      emnekode: "INF100",
+      pris: 300,
+      tilstand: "God",
+      by: "Bergen",
+      beskrivelse: "Tredje utgave. Noen gule lapper som du kan fjerne selv.",
+      selger: "Jonas",
+      dato: "2026-10-12",
+      status: "Til salgs"
+    },
+    {
+      id: "a5",
+      tittel: "Calculus: A Complete Course",
+      forfatter: "Robert A. Adams og Christopher Essex",
+      emnekode: "TMA4100",
+      pris: 520,
+      tilstand: "Godt brukt",
+      by: "Trondheim",
+      beskrivelse: "Mye notater i margen, kan faktisk være nyttig. Ryggen er litt løs.",
+      selger: "Emil",
+      dato: "2026-10-08",
+      status: "Reservert"
+    },
+    {
+      id: "a6",
+      tittel: "Big Java: Early Objects",
+      forfatter: "Cay S. Horstmann",
+      emnekode: "TDT4100",
+      pris: 400,
+      tilstand: "God",
+      by: "Trondheim",
+      beskrivelse: "Brukt ett semester. Kan møtes på Gløshaugen.",
+      selger: "Nora",
+      dato: "2026-10-19",
+      status: "Til salgs"
+    },
+    {
+      id: "a7",
+      tittel: "Probability and Statistics for Engineering and the Sciences",
+      forfatter: "Jay L. Devore",
+      emnekode: "STK1100",
+      pris: 350,
+      tilstand: "Brukt",
+      by: "Oslo",
+      beskrivelse: "Noen sider har markeringstusj. Selges billig.",
+      selger: "Henrik",
+      dato: "2026-10-05",
+      status: "Til salgs"
+    },
+    {
+      id: "a8",
+      tittel: "Rettskildelære",
+      forfatter: "Torstein Eckhoff",
+      emnekode: "JUS1111",
+      pris: 280,
+      tilstand: "God",
+      by: "Bergen",
+      beskrivelse: "Klassikeren. Pent brukt, ingen understrekninger.",
+      selger: "Thea",
+      dato: "2026-10-14",
+      status: "Solgt"
+    },
+    {
+      id: "a9",
+      tittel: "Campbell Biology",
+      forfatter: "Lisa A. Urry m.fl.",
+      emnekode: "BI1001",
+      pris: 600,
+      tilstand: "Som ny",
+      by: "Tromsø",
+      beskrivelse: "Stor og tung bok i veldig god stand. Kan sendes mot porto.",
+      selger: "Ola",
+      dato: "2026-10-21",
+      status: "Til salgs"
+    },
+    {
+      id: "a10",
+      tittel: "Chemistry",
+      forfatter: "Steven S. Zumdahl og Susan A. Zumdahl",
+      emnekode: "KJM1100",
+      pris: 320,
+      tilstand: "Godt brukt",
+      by: "Stavanger",
+      beskrivelse: "Fungerer fint, men omslaget har et kaffemerke.",
+      selger: "Maria",
+      dato: "2026-10-02",
+      status: "Til salgs"
+    }
+  ];
+
+  // ========== LAGRING (localStorage) ==========
+  const LAGRINGSNOKKEL = "pensumbors_annonser_v1";
+
+  function lagreAnnonser(liste) {
+    try {
+      localStorage.setItem(LAGRINGSNOKKEL, JSON.stringify(liste));
+    } catch (feil) {
+      console.warn("Kunne ikke lagre annonser:", feil);
+    }
+  }
+
+  function hentAnnonser() {
+    try {
+      const lagret = localStorage.getItem(LAGRINGSNOKKEL);
+      if (lagret) {
+        const data = JSON.parse(lagret);
+        if (Array.isArray(data)) return data;
+      }
+    } catch (feil) {
+      console.warn("Kunne ikke lese lagrede annonser:", feil);
+    }
+    // Ingen lagrede annonser ennå: bruk eksemplene og lagre dem
+    const kopi = EKSEMPELANNONSER.map(a => ({ ...a }));
+    lagreAnnonser(kopi);
+    return kopi;
+  }
+
+  let annonser = hentAnnonser();
+
+  // ========== HJELPEFUNKSJONER ==========
+  // Gjør tekst trygg å vise i HTML (viktig når brukere senere kan skrive egne annonser)
+  function trygg(tekst) {
+    return String(tekst ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function formaterPris(pris) {
+    return Number(pris).toLocaleString("nb-NO") + " kr";
+  }
+
+  // Samme emnekode får alltid samme omslagsfarge
+  const OMSLAGSFARGER = ["#2F6B4F", "#7E4E3B", "#35566F", "#6E6232", "#57476B", "#2B6463", "#8A5C2E", "#4A5D3A"];
+  function omslagsfarge(emnekode) {
+    let sum = 0;
+    for (const tegn of String(emnekode)) sum = (sum * 31 + tegn.charCodeAt(0)) >>> 0;
+    return OMSLAGSFARGER[sum % OMSLAGSFARGER.length];
+  }
+
+  // ========== VISNING ==========
+  const rutenett = document.getElementById("rutenett");
+  const antallTekst = document.getElementById("antall");
+  const sokefelt = document.getElementById("sokefelt");
+
+  const stedIkon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
+
+  function lagKort(a) {
+    return `
+      <article class="kort">
+        <div class="omslag" style="background:${omslagsfarge(a.emnekode)}" aria-hidden="true">
+          <div class="omslag-tittel"><span class="omslag-kode">${trygg(a.emnekode)}</span></div>
+        </div>
+        <div class="kort-innhold">
+          <h2 class="kort-tittel">${trygg(a.tittel)}</h2>
+          <span class="kort-kode">${trygg(a.emnekode)}</span>
+          <div class="kort-pris">${formaterPris(a.pris)}</div>
+          <div class="kort-detaljer">
+            <span>${trygg(a.tilstand)}</span>
+            <span class="sted">${stedIkon}${trygg(a.by)}</span>
+          </div>
+        </div>
+      </article>`;
+  }
+
+  function visAnnonser() {
+    const sok = sokefelt.value.trim().toLowerCase();
+    const sokUtenMellomrom = sok.replace(/\s+/g, ""); // så «mat 1100» også finner MAT1100
+
+    const treff = annonser.filter(a => {
+      if (!sok) return true;
+      const tittel = String(a.tittel).toLowerCase();
+      const kode = String(a.emnekode).toLowerCase();
+      return tittel.includes(sok) || kode.includes(sokUtenMellomrom);
+    });
+
+    // Nyeste annonser først
+    treff.sort((x, y) => String(y.dato).localeCompare(String(x.dato)));
+
+    antallTekst.textContent = treff.length === 1 ? "1 annonse" : `${treff.length} annonser`;
+
+    if (treff.length === 0) {
+      rutenett.innerHTML = `
+        <div class="tomt" style="grid-column: 1 / -1">
+          <strong>Ingen treff på «${trygg(sokefelt.value.trim())}»</strong>
+          Sjekk stavemåten, eller prøv bare emnekoden, for eksempel MAT1100.
+        </div>`;
+      return;
+    }
+
+    rutenett.innerHTML = treff.map(lagKort).join("");
+  }
+
+  // Søk mens du skriver
+  sokefelt.addEventListener("input", visAnnonser);
+
+  // Klikk på logoen tømmer søket og går til toppen
+  document.querySelector(".logo").addEventListener("click", e => {
+    e.preventDefault();
+    sokefelt.value = "";
+    visAnnonser();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  visAnnonser();
+</script>
+</body>
+</html>
