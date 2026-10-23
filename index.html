@@ -4,1177 +4,37 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pensumbørs – kjøp og selg brukte pensumbøker</title>
-<style>
-  /* ========== FARGER OG GRUNNOPPSETT ========== */
-  :root {
-    --gronn: #1D4A38;          /* dyp grønn – hovedfarge */
-    --gronn-mork: #133326;
-    --gronn-lys: #E2EBE3;
-    --bakgrunn: #F8F4EC;       /* varm off-white */
-    --kort: #FFFDF8;
-    --tekst: #1E2A23;
-    --tekst-dempet: #5D6A62;
-    --kant: #E5DDCF;
-    --messing: #B8935A;        /* liten varm aksent */
-    --feil: #A63A2B;           /* farge for feilmeldinger */
-    --feil-lys: #FBEDEA;
-    /* Statusfarger */
-    --til-salgs-bg: #DCEADF;  --til-salgs-tekst: #1D4A38;
-    --reservert-bg: #F5E3B8;  --reservert-tekst: #6B4A0E;
-    --solgt-bg: #F2DCD6;      --solgt-tekst: #8A2E20;
-    --hjerte: #B23A2E;         /* farge for favoritthjertet */
-    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
-    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  }
+<meta name="description" content="Kjøp og selg brukte pensumbøker fra andre studenter. Søk på emnekode, filtrer på pris, tilstand og lærested, og legg ut dine egne bøker med bilder.">
+<meta name="theme-color" content="#1D4A38">
+<link rel="icon" href="bilder/ikon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="bilder/ikon-180.png">
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  [hidden] { display: none !important; }
+<!-- Forhåndsvisning når lenken deles (Facebook, Messenger, Slack osv.). Delingsbildet må ha
+     full adresse: endre den hvis nettsiden flyttes, f.eks. hvis repoet får et nytt navn. -->
+<meta property="og:type" content="website">
+<meta property="og:locale" content="nb_NO">
+<meta property="og:site_name" content="Pensumbørs">
+<meta property="og:title" content="Pensumbørs – kjøp og selg brukte pensumbøker">
+<meta property="og:description" content="Søk på emnekode og finn billige brukte pensumbøker fra andre studenter – eller selg dine egne.">
+<meta property="og:url" content="https://alminba.github.io/pernsumbors/">
+<meta property="og:image" content="https://alminba.github.io/pernsumbors/bilder/delingsbilde.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Pensumbørs – kjøp og selg brukte pensumbøker, fra student til student">
+<meta name="twitter:card" content="summary_large_image">
 
-  body {
-    font-family: var(--sans);
-    background: var(--bakgrunn);
-    color: var(--tekst);
-    line-height: 1.5;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
-  /* Hindrer at siden bak skjemaet/filterpanelet ruller mens det er åpent */
-  body.modal-apen { overflow: hidden; }
-
-  /* ========== TOPPFELT (HEADER) ========== */
-  .topp {
-    background: var(--gronn);
-    color: var(--bakgrunn);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    box-shadow: 0 2px 0 var(--gronn-mork);
-  }
-  .topp-innhold {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 14px 20px 16px;
-    display: flex;
-    align-items: center;
-    gap: 24px;
-  }
-  .logo {
-    font-family: var(--serif);
-    font-size: 1.65rem;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-    color: var(--bakgrunn);
-    text-decoration: none;
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  /* Liten bokstabel laget med CSS – ingen bilder */
-  .logo-merke {
-    display: inline-flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-  .logo-merke span {
-    display: block;
-    height: 5px;
-    border-radius: 1px;
-    background: var(--bakgrunn);
-  }
-  .logo-merke span:nth-child(1) { width: 18px; margin-left: 3px; }
-  .logo-merke span:nth-child(2) { width: 22px; background: var(--messing); }
-  .logo-merke span:nth-child(3) { width: 20px; margin-left: 1px; }
-
-  .sok {
-    flex: 1;
-    position: relative;
-  }
-  .sok svg {
-    position: absolute;
-    left: 14px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 18px;
-    height: 18px;
-    color: var(--tekst-dempet);
-    pointer-events: none;
-  }
-  .sok input {
-    width: 100%;
-    font: inherit;
-    font-size: 1rem;
-    padding: 12px 16px 12px 42px;
-    border: 2px solid transparent;
-    border-radius: 999px;
-    background: var(--bakgrunn);
-    color: var(--tekst);
-  }
-  .sok input::placeholder { color: var(--tekst-dempet); }
-  .sok input:focus {
-    outline: none;
-    border-color: var(--messing);
-  }
-
-  /* «Legg ut annonse»-knappen i toppfeltet */
-  .legg-ut-knapp {
-    font: inherit;
-    font-weight: 600;
-    font-size: 0.98rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 11px 18px;
-    border: 2px solid var(--messing);
-    border-radius: 999px;
-    background: var(--messing);
-    color: var(--gronn-mork);
-    cursor: pointer;
-    white-space: nowrap;
-  }
-  .legg-ut-knapp:hover { background: #C7A36B; border-color: #C7A36B; }
-  .legg-ut-knapp:focus-visible { outline: 3px solid var(--bakgrunn); outline-offset: 2px; }
-  .legg-ut-knapp svg { width: 16px; height: 16px; }
-
-  /* Knappene til høyre i toppfeltet */
-  .topp-handlinger {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  /* «Mine favoritter»-lenken i toppfeltet */
-  .favoritt-lenke {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 9px 14px;
-    border-radius: 999px;
-    color: var(--bakgrunn);
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 0.98rem;
-    white-space: nowrap;
-  }
-  .favoritt-lenke:hover { background: rgba(255, 255, 255, 0.1); }
-  .favoritt-lenke[aria-current="page"] { background: rgba(255, 255, 255, 0.16); }
-  .favoritt-lenke:focus-visible { outline: 3px solid var(--messing); outline-offset: 2px; }
-  .favoritt-lenke svg { width: 20px; height: 20px; }
-  .favoritt-lenke svg path { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
-  .favoritt-lenke[aria-current="page"] svg path { fill: currentColor; }
-  .favoritt-antall {
-    min-width: 20px;
-    height: 20px;
-    padding: 0 6px;
-    border-radius: 999px;
-    background: var(--bakgrunn);
-    color: var(--gronn);
-    font-size: 0.78rem;
-    font-weight: 700;
-    display: inline-grid;
-    place-items: center;
-  }
-
-  /* Tekst som bare skjermlesere skal lese */
-  .skjult-tekst {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-
-  /* ========== HOVEDINNHOLD ========== */
-  main {
-    flex: 1;
-    width: 100%;
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 28px 20px 48px;
-  }
-  .sidetittel-rad {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
-  }
-  .sidetittel {
-    font-family: var(--serif);
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--gronn);
-  }
-  .sidetittel:focus { outline: none; }
-
-  /* Filter til venstre, annonser til høyre */
-  .oppsett {
-    display: grid;
-    grid-template-columns: 230px minmax(0, 1fr);
-    gap: 32px;
-    align-items: start;
-  }
-
-  /* ========== FILTERPANEL ========== */
-  .filterpanel {
-    position: sticky;
-    top: 100px;
-    background: var(--kort);
-    border: 1px solid var(--kant);
-    border-radius: 12px;
-    padding: 16px 18px 6px;
-  }
-  .filter-topp {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding-bottom: 12px;
-  }
-  .filter-topp h2 {
-    font-family: var(--serif);
-    font-size: 1.15rem;
-  }
-  .filter-topp-handlinger { display: flex; align-items: center; gap: 4px; }
-  .lenkeknapp {
-    font: inherit;
-    font-size: 0.9rem;
-    font-weight: 600;
-    background: none;
-    border: none;
-    color: var(--gronn);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-    cursor: pointer;
-    padding: 4px 6px;
-    border-radius: 6px;
-  }
-  .lenkeknapp:focus-visible { outline: 3px solid var(--messing); }
-  .lukk-knapp.filter-lukk { display: none; } /* vises bare på mobil */
-  .filter-bunn { display: none; } /* vises bare på mobil */
-
-  .filtergruppe {
-    border-top: 1px solid var(--kant);
-    padding: 14px 0 16px;
-  }
-  .filtergruppe fieldset { border: none; }
-  .filtergruppe legend,
-  .filtergruppe .gruppe-tittel {
-    float: left;               /* gjør legend til en vanlig blokk */
-    width: 100%;
-    font-weight: 600;
-    font-size: 0.95rem;
-    margin-bottom: 8px;
-  }
-  .filtergruppe legend + *,
-  .filtergruppe .gruppe-tittel + * { clear: both; }
-
-  /* Av/på-bryter for «Skjul solgte» */
-  .bryter {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 0.95rem;
-  }
-  .bryter input {
-    position: absolute;
-    opacity: 0;
-    width: 1px;
-    height: 1px;
-  }
-  .bryter-spor {
-    position: relative;
-    flex-shrink: 0;
-    width: 44px;
-    height: 26px;
-    border-radius: 999px;
-    background: #CFC6B6;
-  }
-  .bryter-spor::after {
-    content: "";
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: #fff;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
-    transition: transform 0.15s;
-  }
-  .bryter input:checked + .bryter-spor { background: var(--gronn); }
-  .bryter input:checked + .bryter-spor::after { transform: translateX(18px); }
-  .bryter input:focus-visible + .bryter-spor { outline: 3px solid var(--messing); outline-offset: 2px; }
-  @media (prefers-reduced-motion: reduce) {
-    .bryter-spor::after { transition: none; }
-  }
-
-  .prisfelt {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-  .prisfelt label {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    font-size: 0.82rem;
-    color: var(--tekst-dempet);
-  }
-  .liten-input,
-  .velger {
-    font: inherit;
-    font-size: 1rem; /* 16px hindrer automatisk zoom på iPhone */
-    width: 100%;
-    padding: 8px 10px;
-    border: 1.5px solid var(--kant);
-    border-radius: 10px;
-    background: var(--kort);
-    color: var(--tekst);
-  }
-  .liten-input:focus,
-  .velger:focus {
-    outline: none;
-    border-color: var(--gronn);
-    box-shadow: 0 0 0 3px var(--gronn-lys);
-  }
-  .liten-input[aria-invalid="true"] {
-    border-color: var(--feil);
-    background: var(--feil-lys);
-  }
-  .filtergruppe .feilmelding { display: block; margin-top: 6px; }
-
-  .avkrysning {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 5px 0;
-    cursor: pointer;
-    font-size: 0.95rem;
-  }
-  .avkrysning input {
-    width: 18px;
-    height: 18px;
-    accent-color: var(--gronn);
-    cursor: pointer;
-    flex-shrink: 0;
-  }
-
-  /* ========== VERKTØYLINJE OVER RUTENETTET ========== */
-  .verktoylinje {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-  }
-  .antall {
-    margin-right: auto;
-    color: var(--tekst-dempet);
-    font-size: 0.95rem;
-  }
-  .sortering {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .sortering label {
-    font-size: 0.93rem;
-    color: var(--tekst-dempet);
-  }
-  .sortering .velger { width: auto; padding: 7px 10px; }
-
-  .filtrer-knapp {
-    display: none; /* vises bare på mobil */
-    font: inherit;
-    font-weight: 600;
-    font-size: 0.95rem;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border: 2px solid var(--gronn);
-    border-radius: 999px;
-    background: var(--kort);
-    color: var(--gronn);
-    cursor: pointer;
-  }
-  .filtrer-knapp:focus-visible { outline: 3px solid var(--messing); outline-offset: 2px; }
-  .filtrer-knapp svg { width: 16px; height: 16px; }
-  .filter-merke {
-    min-width: 20px;
-    height: 20px;
-    padding: 0 6px;
-    border-radius: 999px;
-    background: var(--gronn);
-    color: var(--bakgrunn);
-    font-size: 0.78rem;
-    display: inline-grid;
-    place-items: center;
-  }
-
-  /* ========== STATUSMERKE ========== */
-  .status {
-    display: inline-block;
-    font-size: 0.76rem;
-    font-weight: 700;
-    line-height: 1;
-    padding: 5px 9px;
-    border-radius: 999px;
-    white-space: nowrap;
-  }
-  .status-til-salgs { background: var(--til-salgs-bg); color: var(--til-salgs-tekst); }
-  .status-reservert { background: var(--reservert-bg); color: var(--reservert-tekst); }
-  .status-solgt     { background: var(--solgt-bg);     color: var(--solgt-tekst); }
-
-  /* ========== RUTENETT MED ANNONSEKORT ========== */
-  .rutenett {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 20px;
-  }
-
-  /* Rammen holder kortet og hjertet (en knapp kan ikke ligge inni en lenke) */
-  .kort-ramme {
-    position: relative;
-    display: flex;
-    transition: transform 0.2s ease;
-  }
-  .kort-ramme .kort { flex: 1; min-width: 0; }
-
-  /* ========== FAVORITTHJERTE ========== */
-  .hjerte {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    z-index: 3;
-    width: 36px;
-    height: 36px;
-    border: none;
-    border-radius: 50%;
-    background: rgba(255, 253, 248, 0.95);
-    color: var(--tekst);
-    display: grid;
-    place-items: center;
-    cursor: pointer;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  }
-  .hjerte svg { width: 20px; height: 20px; }
-  .hjerte svg path,
-  .favoritt-knapp svg path {
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linejoin: round;
-  }
-  .hjerte:hover,
-  .hjerte[aria-pressed="true"] { color: var(--hjerte); }
-  .hjerte[aria-pressed="true"] svg path,
-  .favoritt-knapp.er-favoritt svg path { fill: currentColor; }
-  .hjerte:focus-visible { outline: 3px solid var(--messing); outline-offset: 2px; }
-
-  /* Lite «hopp» når du trykker på hjertet */
-  .pop svg { animation: hjertePop 0.32s ease-out; }
-  @keyframes hjertePop {
-    0%   { transform: scale(1); }
-    45%  { transform: scale(1.3); }
-    100% { transform: scale(1); }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .pop svg { animation: none; }
-  }
-
-  /* Hele kortet er en lenke til detaljvisningen */
-  .kort {
-    position: relative;
-    background: var(--kort);
-    border: 1px solid var(--kant);
-    border-radius: 12px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    color: inherit;
-    text-decoration: none;
-  }
-  .kort:focus-visible { outline: 3px solid var(--messing); outline-offset: 2px; }
-  .kort .status {
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    z-index: 2;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
-  }
-  /* Solgte annonser er blekere (men statusmerket er like tydelig) */
-  .kort.er-solgt .omslag { filter: grayscale(0.85); opacity: 0.55; }
-  .kort.er-solgt .kort-innhold { opacity: 0.55; }
-  .kort.er-solgt:hover .omslag,
-  .kort.er-solgt:hover .kort-innhold { opacity: 0.8; }
-
-  /* Kort som akkurat er lagt ut får en kort markering */
-  .kort.ny { animation: nyMarkering 2.4s ease-out; }
-  @keyframes nyMarkering {
-    0%, 40% { box-shadow: 0 0 0 3px var(--messing); }
-    100%    { box-shadow: 0 0 0 3px transparent; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .kort.ny { animation: none; box-shadow: 0 0 0 3px var(--messing); }
-  }
-
-  /* "Bokomslag" – plassholder i stedet for bilde */
-  .omslag {
-    position: relative;
-    aspect-ratio: 4 / 3;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding-left: 22px; /* plass til bokryggen */
-    overflow: hidden;
-  }
-  /* Bokrygg til venstre */
-  .omslag::before {
-    content: "";
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 16px;
-    background: rgba(0, 0, 0, 0.22);
-    box-shadow: 2px 0 0 rgba(255, 255, 255, 0.12);
-  }
-  /* Svak tekstilstruktur, som et stoffomslag */
-  .omslag::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-image:
-      repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 3px),
-      repeating-linear-gradient(90deg, rgba(0,0,0,0.04) 0 1px, transparent 1px 3px);
-    pointer-events: none;
-  }
-  .omslag-tittel {
-    position: relative;
-    z-index: 1;
-    text-align: center;
-    color: #FBF7EF;
-    border-top: 1px solid rgba(251, 247, 239, 0.55);
-    border-bottom: 1px solid rgba(251, 247, 239, 0.55);
-    padding: 8px 14px;
-    max-width: 90%;
-  }
-  .omslag-kode {
-    font-family: var(--serif);
-    font-size: 1.45rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    display: block;
-    overflow-wrap: anywhere;
-  }
-
-  .kort-innhold {
-    padding: 14px 16px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    flex: 1;
-  }
-  .kort-tittel {
-    font-family: var(--serif);
-    font-size: 1.08rem;
-    font-weight: 700;
-    line-height: 1.3;
-    overflow-wrap: anywhere;
-    /* maks to linjer med tittel */
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  .kort-kode {
-    align-self: flex-start;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--gronn);
-    background: var(--gronn-lys);
-    padding: 2px 9px;
-    border-radius: 6px;
-    max-width: 100%;
-    overflow-wrap: anywhere;
-  }
-  .kort-pris {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--gronn-mork);
-    margin-top: auto;
-    padding-top: 6px;
-  }
-  .kort-detaljer {
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
-    font-size: 0.88rem;
-    color: var(--tekst-dempet);
-  }
-  .kort-detaljer .sted {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    min-width: 0;
-    overflow-wrap: anywhere;
-  }
-  .kort-detaljer svg { width: 14px; height: 14px; flex-shrink: 0; }
-
-  /* Tom tilstand – når søk/filtre ikke gir treff */
-  .tomt {
-    text-align: center;
-    padding: 48px 20px;
-    color: var(--tekst-dempet);
-    border: 2px dashed var(--kant);
-    border-radius: 12px;
-  }
-  .tomt strong {
-    display: block;
-    font-family: var(--serif);
-    font-size: 1.2rem;
-    color: var(--tekst);
-    margin-bottom: 6px;
-    overflow-wrap: anywhere;
-  }
-  .tomt .knapp { margin-top: 18px; }
-
-  /* ========== DETALJVISNING ========== */
-  .tilbake-knapp {
-    font: inherit;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 14px 8px 10px;
-    margin-bottom: 20px;
-    border: none;
-    border-radius: 999px;
-    background: transparent;
-    color: var(--gronn);
-    cursor: pointer;
-  }
-  .tilbake-knapp:hover { background: var(--gronn-lys); }
-  .tilbake-knapp:focus-visible { outline: 3px solid var(--messing); }
-  .tilbake-knapp svg { width: 18px; height: 18px; }
-
-  .detalj {
-    display: grid;
-    grid-template-columns: minmax(220px, 340px) minmax(0, 1fr);
-    gap: 40px;
-    align-items: start;
-  }
-  .detalj .omslag {
-    aspect-ratio: 3 / 4;
-    border-radius: 6px 12px 12px 6px;
-    padding-left: 32px;
-    box-shadow: 0 10px 30px rgba(19, 51, 38, 0.18);
-  }
-  .detalj .omslag::before { width: 22px; }
-  .detalj .omslag-kode { font-size: 2.1rem; }
-  .detalj.er-solgt .omslag { filter: grayscale(0.85); opacity: 0.65; }
-
-  .detalj-info { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-  .detalj-info .status { font-size: 0.85rem; padding: 6px 12px; }
-  .detalj-topprad {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-  .favoritt-knapp {
-    font: inherit;
-    font-weight: 600;
-    font-size: 0.93rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 14px;
-    border: 2px solid var(--kant);
-    border-radius: 999px;
-    background: var(--kort);
-    color: var(--tekst);
-    cursor: pointer;
-  }
-  .favoritt-knapp:hover { border-color: var(--hjerte); }
-  .favoritt-knapp.er-favoritt {
-    border-color: var(--hjerte);
-    color: var(--hjerte);
-    background: var(--feil-lys);
-  }
-  .favoritt-knapp:focus-visible { outline: 3px solid var(--messing); outline-offset: 2px; }
-  .favoritt-knapp svg { width: 18px; height: 18px; }
-  .detalj-tittel {
-    font-family: var(--serif);
-    font-size: 2rem;
-    line-height: 1.2;
-    color: var(--gronn-mork);
-    margin-top: 6px;
-    overflow-wrap: anywhere;
-  }
-  .detalj-tittel:focus { outline: none; }
-  .detalj-forfatter { color: var(--tekst-dempet); font-size: 1.05rem; overflow-wrap: anywhere; }
-  .detalj-pris {
-    font-size: 1.9rem;
-    font-weight: 700;
-    color: var(--gronn-mork);
-    margin: 10px 0 6px;
-  }
-
-  .detalj-fakta {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
-    gap: 14px 20px;
-    padding: 18px 0;
-    border-top: 1px solid var(--kant);
-    border-bottom: 1px solid var(--kant);
-  }
-  .detalj-fakta dt { font-size: 0.85rem; color: var(--tekst-dempet); }
-  .detalj-fakta dd { font-weight: 600; overflow-wrap: anywhere; }
-
-  .detalj-seksjon { padding-top: 18px; }
-  .detalj-seksjon h2 {
-    font-family: var(--serif);
-    font-size: 1.15rem;
-    margin-bottom: 8px;
-  }
-  .detalj-beskrivelse {
-    white-space: pre-line; /* beholder linjeskift fra selgeren */
-    overflow-wrap: anywhere;
-    max-width: 65ch;
-  }
-  .detalj-beskrivelse.tom { color: var(--tekst-dempet); font-style: italic; }
-
-  .kontakt-boks {
-    margin-top: 12px;
-    padding: 14px 16px;
-    border-radius: 12px;
-    background: var(--gronn-lys);
-  }
-  .kontakt-boks a {
-    display: inline-block;
-    font-weight: 700;
-    font-size: 1.08rem;
-    color: var(--gronn-mork);
-    overflow-wrap: anywhere;
-    margin: 2px 0 6px;
-  }
-  .kontakt-boks .liten { font-size: 0.85rem; color: var(--tekst-dempet); }
-
-  .statusvalg {
-    display: inline-flex;
-    flex-wrap: wrap;
-    border: 2px solid var(--gronn);
-    border-radius: 12px;
-    overflow: hidden;
-  }
-  .statusvalg button {
-    font: inherit;
-    font-weight: 600;
-    padding: 9px 16px;
-    border: none;
-    background: var(--kort);
-    color: var(--gronn);
-    cursor: pointer;
-  }
-  .statusvalg button + button { border-left: 2px solid var(--gronn); }
-  .statusvalg button:hover { background: var(--gronn-lys); }
-  .statusvalg button[aria-pressed="true"] { background: var(--gronn); color: var(--bakgrunn); }
-  .statusvalg button:focus-visible { outline: 3px solid var(--messing); outline-offset: -3px; }
-  .statushjelp { font-size: 0.85rem; color: var(--tekst-dempet); margin-top: 8px; }
-
-  /* ========== BUNNTEKST (FOOTER) ========== */
-  .bunn {
-    background: var(--gronn-mork);
-    color: rgba(248, 244, 236, 0.8);
-    font-size: 0.9rem;
-  }
-  .bunn-innhold {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 28px 20px calc(28px + env(safe-area-inset-bottom, 0px));
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    flex-wrap: wrap;
-    gap: 12px 40px;
-  }
-  .bunn-navn {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    font-family: var(--serif);
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--bakgrunn);
-    margin-bottom: 2px;
-  }
-  .bunn-navn .logo-merke span { height: 4px; }
-  .bunn-navn .logo-merke span:nth-child(1) { width: 14px; margin-left: 2px; }
-  .bunn-navn .logo-merke span:nth-child(2) { width: 17px; }
-  .bunn-navn .logo-merke span:nth-child(3) { width: 15px; margin-left: 1px; }
-  .bunn-merknad { font-size: 0.82rem; max-width: 40ch; }
-
-  /* ========== SELGERBOKS I DETALJVISNINGEN ========== */
-  .selgerboks {
-    margin-top: 22px;
-    padding: 16px 18px 18px;
-    border: 1px dashed #CFC6B6;
-    border-radius: 12px;
-  }
-  .selgerboks h2 {
-    font-family: var(--serif);
-    font-size: 1.15rem;
-    margin-bottom: 10px;
-  }
-
-  /* ========== SUBTILE HOVER-EFFEKTER ========== */
-  .knapp, .legg-ut-knapp, .filtrer-knapp, .favoritt-knapp, .favoritt-lenke,
-  .tilbake-knapp, .lukk-knapp, .lenkeknapp, .statusvalg button, .hjerte,
-  .velger, .liten-input, .sok input, .felt input, .felt select, .felt textarea {
-    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease,
-                box-shadow 0.15s ease, transform 0.15s ease;
-  }
-  .kort { transition: border-color 0.2s ease, box-shadow 0.2s ease; }
-
-  /* Bare på enheter med mus (ikke på mobil, der «hover» kan henge igjen etter et trykk) */
-  @media (hover: hover) {
-    .kort-ramme:hover { transform: translateY(-3px); }
-    .kort-ramme:hover .kort {
-      border-color: var(--gronn);
-      box-shadow: 0 8px 22px rgba(19, 51, 38, 0.13);
-    }
-    .hjerte:hover { transform: scale(1.08); }
-    .legg-ut-knapp:hover { box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18); }
-    .knapp-primar:hover { box-shadow: 0 3px 10px rgba(19, 51, 38, 0.22); }
-    .filtrer-knapp:hover { background: var(--gronn-lys); }
-    .lenkeknapp:hover { text-decoration-thickness: 2px; }
-    .velger:hover, .liten-input:hover,
-    .felt input:hover, .felt select:hover, .felt textarea:hover { border-color: #CDBFA8; }
-    .avkrysning:hover { color: var(--gronn); }
-    .kontakt-boks a:hover { color: var(--gronn); }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .kort-ramme, .kort, .hjerte, .knapp, .legg-ut-knapp { transition: none; }
-    .kort-ramme:hover, .hjerte:hover { transform: none; }
-  }
-
-  /* ========== FELLES KNAPPER ========== */
-  .knapp {
-    font: inherit;
-    font-weight: 600;
-    padding: 11px 20px;
-    border-radius: 999px;
-    cursor: pointer;
-    border: 2px solid var(--gronn);
-  }
-  .knapp:focus-visible { outline: 3px solid var(--messing); outline-offset: 2px; }
-  .knapp-primar { background: var(--gronn); color: var(--bakgrunn); }
-  .knapp-primar:hover { background: var(--gronn-mork); border-color: var(--gronn-mork); }
-  .knapp-sekundar { background: transparent; color: var(--gronn); }
-  .knapp-sekundar:hover { background: var(--gronn-lys); }
-
-  /* ========== SKJEMA FOR NY ANNONSE (dialogvindu) ========== */
-  dialog.skjema-dialog {
-    border: none;
-    padding: 0;
-    margin: auto;
-    width: min(600px, calc(100% - 32px));
-    max-height: calc(100vh - 48px);
-    border-radius: 16px;
-    background: var(--bakgrunn);
-    color: var(--tekst);
-    box-shadow: 0 20px 60px rgba(19, 51, 38, 0.35);
-    overflow: auto;
-  }
-  dialog.skjema-dialog::backdrop {
-    background: rgba(19, 51, 38, 0.55);
-  }
-  .dialog-topp {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 18px 24px;
-    background: var(--gronn);
-    color: var(--bakgrunn);
-  }
-  .dialog-topp h2 {
-    font-family: var(--serif);
-    font-size: 1.35rem;
-  }
-  .lukk-knapp {
-    width: 38px;
-    height: 38px;
-    border: none;
-    border-radius: 50%;
-    background: transparent;
-    color: var(--bakgrunn);
-    cursor: pointer;
-    display: grid;
-    place-items: center;
-  }
-  .lukk-knapp:hover { background: rgba(255,255,255,0.12); }
-  .lukk-knapp:focus-visible { outline: 3px solid var(--messing); }
-  .lukk-knapp svg { width: 20px; height: 20px; }
-
-  .skjema {
-    padding: 22px 24px 24px;
-  }
-  .skjema-intro {
-    color: var(--tekst-dempet);
-    font-size: 0.92rem;
-    margin-bottom: 18px;
-  }
-  .felter {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px 18px;
-  }
-  .felt { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-  .felt.bred { grid-column: 1 / -1; }
-  .felt label {
-    font-weight: 600;
-    font-size: 0.93rem;
-  }
-  .felt label .valgfritt {
-    font-weight: 400;
-    color: var(--tekst-dempet);
-  }
-  .felt input,
-  .felt select,
-  .felt textarea {
-    font: inherit;
-    font-size: 1rem; /* 16px hindrer automatisk zoom på iPhone */
-    width: 100%;
-    padding: 10px 12px;
-    border: 1.5px solid var(--kant);
-    border-radius: 10px;
-    background: var(--kort);
-    color: var(--tekst);
-  }
-  .felt textarea { resize: vertical; min-height: 96px; }
-  .felt input:focus,
-  .felt select:focus,
-  .felt textarea:focus {
-    outline: none;
-    border-color: var(--gronn);
-    box-shadow: 0 0 0 3px var(--gronn-lys);
-  }
-  .felt [aria-invalid="true"] {
-    border-color: var(--feil);
-    background: var(--feil-lys);
-  }
-  .felt [aria-invalid="true"]:focus {
-    border-color: var(--feil);
-    box-shadow: 0 0 0 3px rgba(166, 58, 43, 0.18);
-  }
-  .feilmelding {
-    color: var(--feil);
-    font-size: 0.86rem;
-    font-weight: 500;
-  }
-  .feilmelding:empty { display: none !important; }
-
-  .skjema-knapper {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    margin-top: 24px;
-  }
-
-  /* ========== BEKREFTELSESMELDING (nederst på skjermen) ========== */
-  .melding {
-    position: fixed;
-    left: 50%;
-    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-    transform: translate(-50%, 20px);
-    max-width: calc(100% - 32px);
-    background: var(--gronn-mork);
-    color: var(--bakgrunn);
-    padding: 12px 20px;
-    border-radius: 12px;
-    font-weight: 500;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.25s, transform 0.25s;
-    z-index: 40;
-  }
-  .melding.synlig { opacity: 1; transform: translate(-50%, 0); }
-  @media (prefers-reduced-motion: reduce) {
-    .melding { transition: none; }
-  }
-
-  /* ========== SMALERE SKJERMER: SØKEFELTET FÅR EGEN RAD ========== */
-  @media (max-width: 900px) {
-    .topp-innhold {
-      flex-wrap: wrap;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 12px 16px 14px;
-    }
-    .sok { order: 3; flex-basis: 100%; }
-    .filterpanel { top: 146px; }
-  }
-
-  /* ========== NETTBRETT OG MOBIL: FILTRE I ET EGET PANEL ========== */
-  @media (max-width: 760px) {
-    .oppsett { grid-template-columns: 1fr; gap: 0; }
-
-    .filtrer-knapp { display: inline-flex; }
-    .verktoylinje { justify-content: space-between; }
-    .antall { order: 3; flex-basis: 100%; margin-right: 0; }
-
-    /* Panelet glir opp fra bunnen og dekker hele skjermen */
-    .filterpanel {
-      position: fixed;
-      inset: 0;
-      z-index: 30;
-      border: none;
-      border-radius: 0;
-      padding: 0;
-      background: var(--bakgrunn);
-      display: flex;
-      flex-direction: column;
-      transform: translateY(100%);
-      visibility: hidden;
-      transition: transform 0.28s ease, visibility 0s linear 0.28s;
-    }
-    .filterpanel.apen {
-      transform: none;
-      visibility: visible;
-      transition: transform 0.28s ease, visibility 0s;
-    }
-    .filter-topp {
-      background: var(--gronn);
-      color: var(--bakgrunn);
-      padding: 12px 12px 12px 16px;
-      padding-top: calc(12px + env(safe-area-inset-top, 0px));
-    }
-    .filter-topp h2 { font-size: 1.3rem; }
-    .filter-topp .lenkeknapp { color: var(--bakgrunn); }
-    .lukk-knapp.filter-lukk { display: grid; }
-    .filter-innhold {
-      flex: 1;
-      overflow-y: auto;
-      padding: 4px 16px 16px;
-    }
-    .filter-innhold .filtergruppe:first-child { border-top: none; }
-    .filter-bunn {
-      display: block;
-      padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
-      border-top: 1px solid var(--kant);
-      background: var(--kort);
-    }
-    .filter-bunn .knapp { width: 100%; }
-
-    /* Detaljvisning: omslaget over teksten */
-    .detalj { grid-template-columns: 1fr; gap: 24px; }
-    .detalj .omslag {
-      aspect-ratio: auto;
-      height: 220px;
-      max-width: 420px;
-    }
-  }
-  @media (max-width: 760px) and (prefers-reduced-motion: reduce) {
-    .filterpanel, .filterpanel.apen { transition: none; }
-  }
-
-  /* ========== MOBILTILPASNING ========== */
-  @media (max-width: 640px) {
-    .logo { font-size: 1.4rem; }
-    .legg-ut-knapp { padding: 8px 14px; font-size: 0.92rem; }
-    main { padding: 20px 14px 40px; }
-    .sidetittel { font-size: 1.25rem; }
-    .sidetittel-rad { margin-bottom: 14px; }
-    .hjerte { top: 6px; right: 6px; width: 32px; height: 32px; }
-    .hjerte svg { width: 18px; height: 18px; }
-    .rutenett {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-    }
-    .omslag { padding-left: 16px; }
-    .omslag::before { width: 11px; }
-    .omslag-kode { font-size: 1.05rem; }
-    .omslag-tittel { padding: 6px 8px; }
-    .kort .status { top: 6px; left: 6px; font-size: 0.68rem; padding: 4px 7px; }
-    .kort-innhold { padding: 10px 12px 12px; }
-    .kort-tittel { font-size: 0.95rem; }
-    .kort-pris { font-size: 1.08rem; }
-    .kort-detaljer { flex-direction: column; gap: 2px; font-size: 0.82rem; }
-
-    .tilbake-knapp { margin-bottom: 12px; margin-left: -6px; }
-    .bunn-innhold { flex-direction: column; align-items: flex-start; padding-left: 16px; padding-right: 16px; }
-    .selgerboks { padding: 14px; }
-    .detalj .omslag { height: 170px; max-width: none; }
-    .detalj .omslag-kode { font-size: 1.6rem; }
-    .detalj-tittel { font-size: 1.5rem; }
-    .detalj-pris { font-size: 1.5rem; }
-    .kontakt .knapp { width: 100%; }
-    .statusvalg { display: flex; }
-    .statusvalg button { flex: 1; padding: 10px 6px; }
-
-    /* Skjemaet fyller hele skjermen på mobil */
-    dialog.skjema-dialog {
-      width: 100%;
-      max-width: 100%;
-      height: 100%;
-      max-height: 100%;
-      border-radius: 0;
-    }
-    .dialog-topp { padding: 14px 16px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); }
-    .skjema { padding: 18px 16px calc(24px + env(safe-area-inset-bottom, 0px)); }
-    .felter { grid-template-columns: 1fr; gap: 14px; }
-    .skjema-knapper { flex-direction: column-reverse; }
-    .skjema-knapper .knapp { width: 100%; }
-  }
-  /* Små telefoner: bare hjerteikon for favoritter, kortere knappetekst */
-  @media (max-width: 520px) {
-    .topp-handlinger { gap: 6px; }
-    .favoritt-lenke { padding: 8px 10px; }
-    .favoritt-tekst {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      overflow: hidden;
-      clip: rect(0 0 0 0);
-      clip-path: inset(50%);
-      white-space: nowrap;
-    }
-  }
-  @media (max-width: 400px) {
-    .ekstra-tekst {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      overflow: hidden;
-      clip: rect(0 0 0 0);
-      clip-path: inset(50%);
-      white-space: nowrap;
-    }
-  }
-  /* Ekstra smale telefoner */
-  @media (max-width: 360px) {
-    .topp-innhold { gap: 10px 8px; padding-left: 12px; padding-right: 12px; }
-    .logo { font-size: 1.25rem; gap: 8px; }
-    .topp-handlinger { gap: 2px; }
-    .favoritt-lenke { padding: 8px; }
-    .legg-ut-knapp { padding: 7px 11px; gap: 6px; }
-    .sortering label { display: none; }
-  }
-</style>
+<link rel="stylesheet" href="css/stil.css">
+<!-- Skriptene deler variabler med hverandre og må stå i denne rekkefølgen.
+     «defer» gjør at de kjøres når hele siden er lest inn. -->
+<script src="js/eksempeldata.js" defer></script>
+<script src="js/data.js" defer></script>
+<script src="js/hjelpere.js" defer></script>
+<script src="js/visninger.js" defer></script>
+<script src="js/sok.js" defer></script>
+<script src="js/skjema.js" defer></script>
+<script src="js/minside.js" defer></script>
+<script src="js/lagredesok.js" defer></script>
+<script src="js/app.js" defer></script>
 </head>
 <body>
 
@@ -1191,26 +51,40 @@
       <input
         type="search"
         id="sokefelt"
-        placeholder="Søk på emnekode eller tittel"
-        aria-label="Søk på emnekode eller tittel"
+        placeholder="Emnekode, tittel eller forfatter"
+        aria-label="Søk på emnekode, tittel eller forfatter"
         autocomplete="off"
         enterkeyhint="search">
     </div>
-    <div class="topp-handlinger">
-      <a href="#favoritter" class="favoritt-lenke" id="favoritt-lenke">
+    <!-- Hovedmenyen ligger i toppfeltet på store skjermer og nederst på mobil (som i Finn-appen) -->
+    <nav class="hovedmeny" aria-label="Hovedmeny">
+      <a href="#" class="menylenke meny-forside" id="forside-lenke">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"></circle><line x1="16.5" y1="16.5" x2="21" y2="21"></line>
+        </svg>
+        <span class="menytekst">Annonser</span>
+      </a>
+      <a href="#favoritter" class="menylenke favoritt-lenke" id="favoritt-lenke">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M12 20.5s-7.5-4.6-9.5-9.3C1.2 8 3 4.5 6.6 4.5c2.1 0 3.6 1.2 5.4 3.2 1.8-2 3.3-3.2 5.4-3.2 3.6 0 5.4 3.5 4.1 6.7-2 4.7-9.5 9.3-9.5 9.3z"/>
         </svg>
-        <span class="favoritt-tekst">Mine favoritter</span>
+        <span class="menytekst">Favoritter</span>
         <span class="favoritt-antall" id="favoritt-antall" hidden></span>
+      </a>
+      <a href="#min-side" class="menylenke meny-minside" id="min-side-lenke">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"></path>
+        </svg>
+        <span class="menytekst">Min side</span>
+        <span class="meny-merke" id="min-side-merke" hidden></span>
       </a>
       <button type="button" class="legg-ut-knapp" id="legg-ut-knapp">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true">
           <line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
-        <span>Legg ut<span class="ekstra-tekst"> annonse</span></span>
+        <span class="menytekst">Legg ut<span class="ekstra-tekst"> annonse</span></span>
       </button>
-    </div>
+    </nav>
   </div>
 </header>
 
@@ -1239,10 +113,15 @@
         </div>
 
         <div class="filter-innhold">
-          <div class="filtergruppe">
+          <div class="filtergruppe brytere">
             <label class="bryter">
               <span>Skjul solgte</span>
               <input type="checkbox" id="skjul-solgte" role="switch">
+              <span class="bryter-spor" aria-hidden="true"></span>
+            </label>
+            <label class="bryter">
+              <span>Kan sendes</span>
+              <input type="checkbox" id="kan-sendes" role="switch">
               <span class="bryter-spor" aria-hidden="true"></span>
             </label>
           </div>
@@ -1268,11 +147,18 @@
             <fieldset>
               <legend>Tilstand</legend>
               <div>
-                <label class="avkrysning"><input type="checkbox" name="tilstand-filter" value="Som ny"> Som ny</label>
-                <label class="avkrysning"><input type="checkbox" name="tilstand-filter" value="God"> God</label>
-                <label class="avkrysning"><input type="checkbox" name="tilstand-filter" value="Brukt"> Brukt</label>
-                <label class="avkrysning"><input type="checkbox" name="tilstand-filter" value="Godt brukt"> Godt brukt</label>
+                <label class="avkrysning"><input type="checkbox" name="tilstand-filter" value="Som ny"> Som ny <span class="filter-antall"></span></label>
+                <label class="avkrysning"><input type="checkbox" name="tilstand-filter" value="God"> God <span class="filter-antall"></span></label>
+                <label class="avkrysning"><input type="checkbox" name="tilstand-filter" value="Brukt"> Brukt <span class="filter-antall"></span></label>
+                <label class="avkrysning"><input type="checkbox" name="tilstand-filter" value="Godt brukt"> Godt brukt <span class="filter-antall"></span></label>
               </div>
+            </fieldset>
+          </div>
+
+          <div class="filtergruppe" id="larested-gruppe">
+            <fieldset>
+              <legend>Lærested</legend>
+              <div id="larested-filter"></div>
             </fieldset>
           </div>
 
@@ -1291,7 +177,8 @@
       </aside>
 
       <!-- ========== ANNONSER ========== -->
-      <section aria-label="Annonser">
+      <section aria-labelledby="annonser-overskrift">
+        <h2 class="skjult-tekst" id="annonser-overskrift">Annonser</h2>
         <div class="verktoylinje">
           <button type="button" class="filtrer-knapp" id="filtrer-knapp"
                   aria-controls="filterpanel" aria-expanded="false">
@@ -1301,7 +188,13 @@
             Filtrer
             <span class="filter-merke" id="filter-merke" hidden></span>
           </button>
-          <span class="antall" id="antall" aria-live="polite"></span>
+          <div class="treff-info">
+            <span class="antall" id="antall" aria-live="polite"></span>
+            <button type="button" class="lagre-sok-knapp" id="lagre-sok-knapp" aria-pressed="false" hidden>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h12v17l-6-4.2-6 4.2z"></path></svg>
+              <span id="lagre-sok-tekst">Lagre søk</span>
+            </button>
+          </div>
           <div class="sortering">
             <label for="sortering">Sorter</label>
             <select class="velger" id="sortering">
@@ -1312,7 +205,15 @@
           </div>
         </div>
 
+        <!-- Filtrene som er i bruk, som brikker du kan fjerne én og én (som på Finn) -->
+        <div class="aktive-filtre" id="aktive-filtre" role="group" aria-label="Aktive filtre" hidden></div>
+
         <div class="rutenett" id="rutenett"></div>
+
+        <div class="vis-flere" id="vis-flere" hidden>
+          <p class="vis-flere-tekst" id="vis-flere-tekst"></p>
+          <button type="button" class="knapp knapp-sekundar" id="vis-flere-knapp">Vis flere annonser</button>
+        </div>
       </section>
     </div>
   </div>
@@ -1327,6 +228,29 @@
     </button>
     <div id="detalj-innhold"></div>
   </section>
+
+  <!-- ========== MIN SIDE ========== -->
+  <section id="minside-visning" hidden aria-labelledby="min-side-overskrift">
+    <div class="sidetittel-rad">
+      <h1 class="sidetittel" id="min-side-overskrift" tabindex="-1">Min side</h1>
+    </div>
+
+    <section class="min-side-del" aria-labelledby="mine-annonser-overskrift">
+      <div class="min-side-del-topp">
+        <h2 id="mine-annonser-overskrift">Mine annonser</h2>
+        <span class="min-side-antall" id="mine-annonser-antall"></span>
+      </div>
+      <div id="mine-annonser"></div>
+    </section>
+
+    <section class="min-side-del" aria-labelledby="lagrede-sok-overskrift">
+      <div class="min-side-del-topp">
+        <h2 id="lagrede-sok-overskrift" tabindex="-1">Lagrede søk</h2>
+        <span class="min-side-antall" id="lagrede-sok-antall"></span>
+      </div>
+      <div id="lagrede-sok"></div>
+    </section>
+  </section>
 </main>
 
 <footer class="bunn">
@@ -1338,7 +262,7 @@
       </p>
       <p>Kjøp og selg brukte pensumbøker – fra student til student.</p>
     </div>
-    <p class="bunn-merknad">Et studentprosjekt. Annonser og favoritter lagres bare i nettleseren din.</p>
+    <p class="bunn-merknad">Et studentprosjekt. Annonser, bilder, favoritter og lagrede søk lagres bare i nettleseren din.</p>
   </div>
 </footer>
 
@@ -1354,9 +278,35 @@
   </div>
 
   <form class="skjema" id="annonseskjema" novalidate>
-    <p class="skjema-intro">Alle felt må fylles ut, bortsett fra beskrivelsen.</p>
+    <p class="skjema-intro">Felt merket «valgfritt» kan stå tomme.</p>
 
     <div class="felter">
+      <div class="felt bred">
+        <span class="felt-etikett" id="bilder-etikett">Bilder <span class="valgfritt">(valgfritt, opptil 4)</span></span>
+        <div class="bildevelger" role="group" aria-labelledby="bilder-etikett">
+          <ul class="bildeliste" id="bildeliste"></ul>
+          <label class="legg-til-bilde" id="legg-til-bilde">
+            <input type="file" id="felt-bilder" accept="image/*" multiple class="skjult-tekst" aria-describedby="bilder-hjelp">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 8h3l2-3h6l2 3h3v11H4z"></path><circle cx="12" cy="13" r="3.5"></circle>
+            </svg>
+            <span>Legg til bilder</span>
+          </label>
+        </div>
+        <span class="felt-hjelp" id="bilder-hjelp" aria-live="polite">Det første bildet blir forsidebildet. Vis gjerne understrekninger og slitasje.</span>
+      </div>
+
+      <div class="felt bred">
+        <label for="felt-isbn">ISBN <span class="valgfritt">(valgfritt)</span></label>
+        <div class="isbn-rad">
+          <input type="text" id="felt-isbn" name="isbn" maxlength="20" inputmode="numeric" autocomplete="off"
+                 placeholder="10 eller 13 siffer" aria-describedby="isbn-hjelp feil-isbn">
+          <button type="button" class="knapp knapp-sekundar" id="hent-bokinfo">Hent bokinfo</button>
+        </div>
+        <span class="felt-hjelp" id="isbn-hjelp" aria-live="polite">Står på baksiden av boka. Da kan vi fylle ut tittel og forfatter for deg.</span>
+        <span class="feilmelding" id="feil-isbn"></span>
+      </div>
+
       <div class="felt bred">
         <label for="felt-tittel">Boktittel</label>
         <input type="text" id="felt-tittel" name="tittel" maxlength="120" autocomplete="off"
@@ -1372,11 +322,25 @@
       </div>
 
       <div class="felt">
+        <label for="felt-utgave">Utgave <span class="valgfritt">(valgfritt)</span></label>
+        <input type="text" id="felt-utgave" name="utgave" maxlength="40" autocomplete="off" placeholder="f.eks. 3. utgave">
+      </div>
+
+      <div class="felt">
         <label for="felt-emnekode">Emnekode</label>
         <input type="text" id="felt-emnekode" name="emnekode" maxlength="20" autocomplete="off"
                autocapitalize="characters" placeholder="f.eks. MAT1100"
                aria-describedby="feil-emnekode">
         <span class="feilmelding" id="feil-emnekode"></span>
+      </div>
+
+      <div class="felt">
+        <label for="felt-larested">Lærested</label>
+        <!-- valgene lages ut fra LARESTEDER i js/hjelpere.js -->
+        <select id="felt-larested" name="larested" aria-describedby="feil-larested">
+          <option value="">Velg lærested</option>
+        </select>
+        <span class="feilmelding" id="feil-larested"></span>
       </div>
 
       <div class="felt">
@@ -1414,1075 +378,36 @@
       </div>
 
       <div class="felt bred">
+        <label class="avkrysning"><input type="checkbox" id="felt-kan-sendes" name="kanSendes"> Jeg kan sende boka i posten</label>
+      </div>
+
+      <div class="felt bred">
         <label for="felt-beskrivelse">Beskrivelse <span class="valgfritt">(valgfritt)</span></label>
         <textarea id="felt-beskrivelse" name="beskrivelse" maxlength="1000"
-                  placeholder="Utgave, notater i boken, hvor dere kan møtes …"></textarea>
+                  placeholder="Notater i boka, hvor dere kan møtes …"></textarea>
       </div>
     </div>
 
     <div class="skjema-knapper">
       <button type="button" class="knapp knapp-sekundar" id="avbryt-knapp">Avbryt</button>
-      <button type="submit" class="knapp knapp-primar">Legg ut annonse</button>
+      <button type="submit" class="knapp knapp-primar" id="send-knapp">Legg ut annonse</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ========== BEKREFTELSE (f.eks. før sletting) ========== -->
+<dialog class="bekreft-dialog" id="bekreft-dialog" aria-labelledby="bekreft-tittel" aria-describedby="bekreft-tekst">
+  <form method="dialog">
+    <h2 id="bekreft-tittel"></h2>
+    <p id="bekreft-tekst"></p>
+    <div class="skjema-knapper">
+      <button type="submit" class="knapp knapp-sekundar" value="nei">Avbryt</button>
+      <button type="submit" class="knapp knapp-fare" value="ja" id="bekreft-ja"></button>
     </div>
   </form>
 </dialog>
 
 <div class="melding" id="melding" role="status" aria-live="polite"></div>
 
-<script>
-  // ========== EKSEMPELANNONSER ==========
-  // Brukes første gang appen åpnes (når det ikke finnes lagrede annonser ennå).
-  const EKSEMPELANNONSER = [
-    {
-      id: "a1",
-      tittel: "Filosofihistorie",
-      forfatter: "Gunnar Skirbekk og Nils Gilje",
-      emnekode: "EXPHIL03",
-      pris: 250,
-      tilstand: "God",
-      by: "Oslo",
-      beskrivelse: "Noen understrekninger med blyant i de første kapitlene. Ellers fin.",
-      selger: "Ingrid",
-      dato: "2026-10-18",
-      status: "Til salgs"
-    },
-    {
-      id: "a2",
-      tittel: "Principles of Economics",
-      forfatter: "N. Gregory Mankiw",
-      emnekode: "ECON1210",
-      pris: 450,
-      tilstand: "Brukt",
-      by: "Oslo",
-      beskrivelse: "Internasjonal utgave. Litt slitt omslag, men alle sider er hele.",
-      selger: "Magnus",
-      dato: "2026-10-15",
-      status: "Til salgs"
-    },
-    {
-      id: "a3",
-      tittel: "Kalkulus",
-      forfatter: "Tom Lindstrøm",
-      emnekode: "MAT1100",
-      pris: 380,
-      tilstand: "Som ny",
-      by: "Oslo",
-      beskrivelse: "Kjøpt i høst, men byttet studieretning. Ingen notater i boka.",
-      selger: "Sara",
-      dato: "2026-10-20",
-      status: "Til salgs"
-    },
-    {
-      id: "a4",
-      tittel: "Python Crash Course",
-      forfatter: "Eric Matthes",
-      emnekode: "INF100",
-      pris: 300,
-      tilstand: "God",
-      by: "Bergen",
-      beskrivelse: "Tredje utgave. Noen gule lapper som du kan fjerne selv.",
-      selger: "Jonas",
-      dato: "2026-10-12",
-      status: "Til salgs"
-    },
-    {
-      id: "a5",
-      tittel: "Calculus: A Complete Course",
-      forfatter: "Robert A. Adams og Christopher Essex",
-      emnekode: "TMA4100",
-      pris: 520,
-      tilstand: "Godt brukt",
-      by: "Trondheim",
-      beskrivelse: "Mye notater i margen, kan faktisk være nyttig. Ryggen er litt løs.",
-      selger: "Emil",
-      dato: "2026-10-08",
-      status: "Reservert"
-    },
-    {
-      id: "a6",
-      tittel: "Big Java: Early Objects",
-      forfatter: "Cay S. Horstmann",
-      emnekode: "TDT4100",
-      pris: 400,
-      tilstand: "God",
-      by: "Trondheim",
-      beskrivelse: "Brukt ett semester. Kan møtes på Gløshaugen.",
-      selger: "Nora",
-      dato: "2026-10-19",
-      status: "Til salgs"
-    },
-    {
-      id: "a7",
-      tittel: "Probability and Statistics for Engineering and the Sciences",
-      forfatter: "Jay L. Devore",
-      emnekode: "STK1100",
-      pris: 350,
-      tilstand: "Brukt",
-      by: "Oslo",
-      beskrivelse: "Noen sider har markeringstusj. Selges billig.",
-      selger: "Henrik",
-      dato: "2026-10-05",
-      status: "Til salgs"
-    },
-    {
-      id: "a8",
-      tittel: "Rettskildelære",
-      forfatter: "Torstein Eckhoff",
-      emnekode: "JUS1111",
-      pris: 280,
-      tilstand: "God",
-      by: "Bergen",
-      beskrivelse: "Klassikeren. Pent brukt, ingen understrekninger.",
-      selger: "Thea",
-      dato: "2026-10-14",
-      status: "Solgt"
-    },
-    {
-      id: "a9",
-      tittel: "Campbell Biology",
-      forfatter: "Lisa A. Urry m.fl.",
-      emnekode: "BI1001",
-      pris: 600,
-      tilstand: "Som ny",
-      by: "Tromsø",
-      beskrivelse: "Stor og tung bok i veldig god stand. Kan sendes mot porto.",
-      selger: "Ola",
-      dato: "2026-10-21",
-      status: "Til salgs"
-    },
-    {
-      id: "a10",
-      tittel: "Chemistry",
-      forfatter: "Steven S. Zumdahl og Susan A. Zumdahl",
-      emnekode: "KJM1100",
-      pris: 320,
-      tilstand: "Godt brukt",
-      by: "Stavanger",
-      beskrivelse: "Fungerer fint, men omslaget har et kaffemerke.",
-      selger: "Maria",
-      dato: "2026-10-02",
-      status: "Til salgs"
-    }
-  ];
-
-  // ========== LAGRING (localStorage) ==========
-  const LAGRINGSNOKKEL = "pensumbors_annonser_v1";
-
-  // Returnerer true hvis lagringen gikk bra, ellers false
-  function lagreAnnonser(liste) {
-    try {
-      localStorage.setItem(LAGRINGSNOKKEL, JSON.stringify(liste));
-      return true;
-    } catch (feil) {
-      console.warn("Kunne ikke lagre annonser:", feil);
-      return false;
-    }
-  }
-
-  function hentAnnonser() {
-    try {
-      const lagret = localStorage.getItem(LAGRINGSNOKKEL);
-      if (lagret) {
-        const data = JSON.parse(lagret);
-        if (Array.isArray(data)) return data;
-      }
-    } catch (feil) {
-      console.warn("Kunne ikke lese lagrede annonser:", feil);
-    }
-    // Ingen lagrede annonser ennå: bruk eksemplene og lagre dem
-    const kopi = EKSEMPELANNONSER.map(a => ({ ...a }));
-    lagreAnnonser(kopi);
-    return kopi;
-  }
-
-  let annonser = hentAnnonser();
-
-  // ========== FAVORITTER (lagres for seg, som en liste med annonse-ID-er) ==========
-  const FAVORITTNOKKEL = "pensumbors_favoritter_v1";
-
-  function hentFavoritter() {
-    try {
-      const data = JSON.parse(localStorage.getItem(FAVORITTNOKKEL));
-      if (Array.isArray(data)) return new Set(data.map(String));
-    } catch (feil) {
-      console.warn("Kunne ikke lese favoritter:", feil);
-    }
-    return new Set();
-  }
-
-  function lagreFavoritter() {
-    try {
-      localStorage.setItem(FAVORITTNOKKEL, JSON.stringify([...favoritter]));
-      return true;
-    } catch (feil) {
-      console.warn("Kunne ikke lagre favoritter:", feil);
-      return false;
-    }
-  }
-
-  let favoritter = hentFavoritter();
-
-  // Teller bare favoritter som fortsatt finnes som annonser
-  function antallFavoritter() {
-    return annonser.filter(a => favoritter.has(a.id)).length;
-  }
-
-  const hjerteIkon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.5-9.3C1.2 8 3 4.5 6.6 4.5c2.1 0 3.6 1.2 5.4 3.2 1.8-2 3.3-3.2 5.4-3.2 3.6 0 5.4 3.5 4.1 6.7-2 4.7-9.5 9.3-9.5 9.3z"/></svg>';
-
-  // ========== HJELPEFUNKSJONER ==========
-  // Gjør tekst trygg å vise i HTML, slik at det brukere skriver ikke kan ødelegge siden
-  function trygg(tekst) {
-    return String(tekst ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
-  }
-
-  // Hardt mellomrom (\u00A0) gjør at «350 kr» aldri deles over to linjer
-  function formaterPris(pris) {
-    const tall = Number(pris);
-    if (!Number.isFinite(tall)) return "Pris ikke oppgitt";
-    return tall.toLocaleString("nb-NO", { maximumFractionDigits: 2 }) + "\u00A0kr";
-  }
-
-  // «2026-10-18» → «18. oktober 2026»
-  function formaterDato(dato) {
-    const d = new Date(String(dato) + "T12:00:00");
-    if (isNaN(d)) return String(dato ?? "");
-    return d.toLocaleDateString("nb-NO", { day: "numeric", month: "long", year: "numeric" });
-  }
-
-  // Dagens dato som ÅÅÅÅ-MM-DD etter norsk (lokal) tid
-  function dagensDato() {
-    const d = new Date();
-    const mnd = String(d.getMonth() + 1).padStart(2, "0");
-    const dag = String(d.getDate()).padStart(2, "0");
-    return `${d.getFullYear()}-${mnd}-${dag}`;
-  }
-
-  // Lager en unik ID for nye annonser
-  function nyId() {
-    return "a" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-  }
-
-  // Bynavn sammenlignes uten forskjell på store og små bokstaver («oslo» = «Oslo»)
-  function bynokkel(by) {
-    return String(by ?? "").trim().toLocaleLowerCase("nb");
-  }
-
-  // Gir et tall ut fra en tekst (samme tekst gir alltid samme tall)
-  function tekstTilTall(tekst) {
-    let sum = 0;
-    for (const tegn of String(tekst)) sum = (sum * 31 + tegn.charCodeAt(0)) >>> 0;
-    return sum;
-  }
-
-  // Samme emnekode får alltid samme omslagsfarge
-  const OMSLAGSFARGER = ["#2F6B4F", "#7E4E3B", "#35566F", "#6E6232", "#57476B", "#2B6463", "#8A5C2E", "#4A5D3A"];
-  function omslagsfarge(emnekode) {
-    return OMSLAGSFARGER[tekstTilTall(emnekode) % OMSLAGSFARGER.length];
-  }
-
-  // ========== STATUS ==========
-  const STATUSER = ["Til salgs", "Reservert", "Solgt"];
-  const STATUSKLASSER = { "Til salgs": "status-til-salgs", "Reservert": "status-reservert", "Solgt": "status-solgt" };
-
-  // Gir alltid en gyldig status (eldre eller ødelagte data blir «Til salgs»)
-  function statusFor(a) {
-    return STATUSER.includes(a.status) ? a.status : "Til salgs";
-  }
-  function statusMerke(status) {
-    return `<span class="status ${STATUSKLASSER[status]}">${trygg(status)}</span>`;
-  }
-
-  // ========== OPPDIKTET E-POSTADRESSE ==========
-  // Lager en falsk, men realistisk adresse ut fra selgerens fornavn.
-  // «.example» er et domene som er reservert for eksempler, så ingen ekte person får e-posten.
-  function lagEpost(a) {
-    let navn = String(a.selger ?? "").trim().split(/\s+/)[0].toLocaleLowerCase("nb")
-      .replace(/æ/g, "ae").replace(/ø/g, "o").replace(/å/g, "a")
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // fjerner aksenter, f.eks. é → e
-      .replace(/[^a-z0-9]/g, "");
-    if (!navn) navn = "selger";
-    const tall = 100 + (tekstTilTall(a.id) % 900);
-    return `${navn}.${tall}@pensumbors.example`;
-  }
-
-  // ========== ELEMENTER PÅ SIDEN ==========
-  const listevisning = document.getElementById("listevisning");
-  const detaljvisning = document.getElementById("detaljvisning");
-  const detaljInnhold = document.getElementById("detalj-innhold");
-  const rutenett = document.getElementById("rutenett");
-  const antallTekst = document.getElementById("antall");
-  const sokefelt = document.getElementById("sokefelt");
-  const skjulSolgte = document.getElementById("skjul-solgte");
-  const prisMin = document.getElementById("pris-min");
-  const prisMax = document.getElementById("pris-max");
-  const prisfilterFeil = document.getElementById("prisfilter-feil");
-  const byFilter = document.getElementById("by-filter");
-  const sorteringValg = document.getElementById("sortering");
-  const nullstillFiltreKnapp = document.getElementById("nullstill-filtre");
-  const filterMerke = document.getElementById("filter-merke");
-  const visResultaterKnapp = document.getElementById("vis-resultater");
-  const tilstandBokser = () => document.querySelectorAll('input[name="tilstand-filter"]');
-  const STANDARDTITTEL = document.title;
-  const sidetittel = document.getElementById("sidetittel");
-  const visAlleLenke = document.getElementById("vis-alle-lenke");
-  const favorittLenke = document.getElementById("favoritt-lenke");
-  const favorittAntall = document.getElementById("favoritt-antall");
-
-  let sistLagtUtId = null; // brukes til å markere annonsen som nettopp ble lagt ut
-
-  // ========== BY-LISTEN I FILTERET ==========
-  // Lager listen over byer ut fra annonsene som finnes
-  function byggByvalg() {
-    const valgt = byFilter.value;
-    const byer = new Map(); // nøkkel (små bokstaver) → navn som vises
-    const harStorForbokstav = s => s[0] === s[0].toLocaleUpperCase("nb");
-    for (const a of annonser) {
-      const navn = String(a.by ?? "").trim();
-      if (!navn) continue;
-      const nokkel = bynokkel(navn);
-      const eksisterende = byer.get(nokkel);
-      // Foretrekk skrivemåten med stor forbokstav («Oslo» framfor «oslo»)
-      if (!eksisterende || (!harStorForbokstav(eksisterende) && harStorForbokstav(navn))) {
-        byer.set(nokkel, navn);
-      }
-    }
-    const sortert = [...byer.entries()].sort((a, b) => a[1].localeCompare(b[1], "nb"));
-    byFilter.innerHTML = '<option value="">Alle byer</option>' +
-      sortert.map(([nokkel, navn]) => `<option value="${trygg(nokkel)}">${trygg(navn)}</option>`).join("");
-    byFilter.value = byer.has(valgt) ? valgt : "";
-  }
-
-  // ========== LESE FILTRENE ==========
-  // Tom tekst → null (ingen grense). Ugyldig tekst → NaN.
-  function tolkFilterPris(tekst) {
-    const renset = String(tekst).replace(/\s/g, "").replace(/kr\.?$/i, "").replace(",", ".");
-    if (renset === "") return null;
-    if (!/^\d+(\.\d{1,2})?$/.test(renset)) return NaN;
-    return Number(renset);
-  }
-
-  function lesFiltre() {
-    const min = tolkFilterPris(prisMin.value);
-    const max = tolkFilterPris(prisMax.value);
-    const tilstander = [...tilstandBokser()].filter(b => b.checked).map(b => b.value);
-    const by = byFilter.value;
-    return { min, max, tilstander, by, skjulSolgte: skjulSolgte.checked };
-  }
-
-  // Viser feilmelding under prisfeltene hvis noe er galt
-  function sjekkPrisfilter(f) {
-    let tekst = "";
-    prisMin.removeAttribute("aria-invalid");
-    prisMax.removeAttribute("aria-invalid");
-    if (Number.isNaN(f.min) || Number.isNaN(f.max)) {
-      tekst = "Skriv prisen som et tall, for eksempel 300.";
-      if (Number.isNaN(f.min)) prisMin.setAttribute("aria-invalid", "true");
-      if (Number.isNaN(f.max)) prisMax.setAttribute("aria-invalid", "true");
-    } else if (f.min !== null && f.max !== null && f.min > f.max) {
-      tekst = "«Fra»-prisen kan ikke være høyere enn «Til»-prisen.";
-      prisMin.setAttribute("aria-invalid", "true");
-      prisMax.setAttribute("aria-invalid", "true");
-    }
-    prisfilterFeil.textContent = tekst;
-  }
-
-  // Teller hvor mange filtre som er i bruk (skjul solgte, pris, tilstand, by)
-  function antallAktiveFiltre(f) {
-    let antall = 0;
-    if (f.skjulSolgte) antall++;
-    if (Number.isFinite(f.min) || Number.isFinite(f.max)) antall++;
-    if (f.tilstander.length) antall++;
-    if (f.by) antall++;
-    return antall;
-  }
-
-  // Er noe skrevet eller valgt i filtrene (også ugyldig tekst)?
-  function harFilterInnhold() {
-    return skjulSolgte.checked || prisMin.value.trim() !== "" || prisMax.value.trim() !== "" ||
-      [...tilstandBokser()].some(b => b.checked) || byFilter.value !== "";
-  }
-
-  function nullstillFiltre() {
-    skjulSolgte.checked = false;
-    prisMin.value = "";
-    prisMax.value = "";
-    tilstandBokser().forEach(b => (b.checked = false));
-    byFilter.value = "";
-  }
-
-  function nullstillSokOgFiltre() {
-    sokefelt.value = "";
-    nullstillFiltre();
-  }
-
-  // ========== LISTEVISNING ==========
-  const stedIkon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
-
-  function lenkeTil(a) {
-    return "#annonse-" + encodeURIComponent(a.id);
-  }
-
-  function lagKort(a) {
-    const status = statusFor(a);
-    const klasser = ["kort"];
-    if (a.id === sistLagtUtId) klasser.push("ny");
-    if (status === "Solgt") klasser.push("er-solgt");
-    const erFavoritt = favoritter.has(a.id);
-    return `
-      <div class="kort-ramme">
-      <a class="${klasser.join(" ")}" href="${lenkeTil(a)}">
-        ${statusMerke(status)}
-        <div class="omslag" style="background:${omslagsfarge(a.emnekode)}" aria-hidden="true">
-          <div class="omslag-tittel"><span class="omslag-kode">${trygg(a.emnekode)}</span></div>
-        </div>
-        <div class="kort-innhold">
-          <h3 class="kort-tittel">${trygg(a.tittel)}</h3>
-          <span class="kort-kode">${trygg(a.emnekode)}</span>
-          <div class="kort-pris">${formaterPris(a.pris)}</div>
-          <div class="kort-detaljer">
-            <span>${trygg(a.tilstand)}</span>
-            <span class="sted">${stedIkon}${trygg(a.by)}</span>
-          </div>
-        </div>
-      </a>
-      <button type="button" class="hjerte" data-favoritt="${trygg(a.id)}"
-              aria-pressed="${erFavoritt}" aria-label="Favoritt: ${trygg(a.tittel)}">${hjerteIkon}</button>
-      </div>`;
-  }
-
-  function antallTekstFor(n) {
-    return n === 1 ? "1 annonse" : `${n} annonser`;
-  }
-
-  function visAnnonser() {
-    // 1. Les søk og filtre
-    const sok = sokefelt.value.trim().toLowerCase();
-    const sokUtenMellomrom = sok.replace(/\s+/g, ""); // så «mat 1100» også finner MAT1100
-    const f = lesFiltre();
-    sjekkPrisfilter(f);
-
-    // 2. Finn annonsene som passer med søk OG alle filtre
-    const favorittmodus = listemodus === "favoritter";
-    const treff = annonser.filter(a => {
-      if (favorittmodus && !favoritter.has(a.id)) return false;
-      if (f.skjulSolgte && statusFor(a) === "Solgt") return false;
-      if (sok) {
-        const tittel = String(a.tittel).toLowerCase();
-        const kode = String(a.emnekode).toLowerCase();
-        if (!tittel.includes(sok) && !kode.includes(sokUtenMellomrom)) return false;
-      }
-      const pris = Number(a.pris);
-      if (Number.isFinite(f.min) && pris < f.min) return false;
-      if (Number.isFinite(f.max) && pris > f.max) return false;
-      if (f.tilstander.length && !f.tilstander.includes(a.tilstand)) return false;
-      if (f.by && bynokkel(a.by) !== f.by) return false;
-      return true;
-    });
-
-    // 3. Sorter. Solgte annonser kommer alltid sist.
-    const sortering = sorteringValg.value;
-    treff.sort((x, y) => {
-      const xSolgt = statusFor(x) === "Solgt";
-      const ySolgt = statusFor(y) === "Solgt";
-      if (xSolgt !== ySolgt) return xSolgt ? 1 : -1;
-      // Nyeste først; ved samme dato vises den sist lagt ut øverst
-      const nyest = String(y.dato).localeCompare(String(x.dato)) || (y.opprettet || 0) - (x.opprettet || 0);
-      if (sortering === "billigste") return (Number(x.pris) - Number(y.pris)) || nyest;
-      if (sortering === "dyreste") return (Number(y.pris) - Number(x.pris)) || nyest;
-      return nyest;
-    });
-
-    // 4. Oppdater tellere og knapper
-    const aktive = antallAktiveFiltre(f);
-    antallTekst.textContent = antallTekstFor(treff.length);
-    visResultaterKnapp.textContent = treff.length === 0 ? "Ingen annonser passer" : `Vis ${antallTekstFor(treff.length)}`;
-    filterMerke.textContent = aktive;
-    filterMerke.hidden = aktive === 0;
-    nullstillFiltreKnapp.hidden = !harFilterInnhold();
-
-    // 5. Tegn kortene, eller en melding hvis ingenting passer
-    if (favorittmodus && antallFavoritter() === 0) {
-      rutenett.innerHTML = `
-        <div class="tomt" style="grid-column: 1 / -1">
-          <strong>Du har ingen favoritter ennå</strong>
-          Trykk på hjertet på en annonse for å lagre den her.
-          <div><button type="button" class="knapp knapp-sekundar" id="tomt-alle">Vis alle annonser</button></div>
-        </div>`;
-      return;
-    }
-
-    if (annonser.length === 0) {
-      rutenett.innerHTML = `
-        <div class="tomt" style="grid-column: 1 / -1">
-          <strong>Ingen annonser ennå</strong>
-          Trykk på «Legg ut annonse» for å selge din første bok.
-        </div>`;
-      return;
-    }
-
-    if (treff.length === 0) {
-      const filtreIBruk = harFilterInnhold();
-      let tittel, tekst, knappetekst;
-      if (sok && !filtreIBruk) {
-        tittel = `Ingen treff på «${trygg(sokefelt.value.trim())}»`;
-        tekst = "Sjekk stavemåten, eller prøv bare emnekoden, for eksempel MAT1100.";
-        knappetekst = "Tøm søket";
-      } else {
-        tittel = "Ingen annonser passer";
-        tekst = "Prøv et større prisområde, en annen by eller færre filtre.";
-        knappetekst = sok ? "Nullstill søk og filtre" : "Nullstill filtre";
-      }
-      rutenett.innerHTML = `
-        <div class="tomt" style="grid-column: 1 / -1">
-          <strong>${tittel}</strong>
-          ${tekst}
-          <div><button type="button" class="knapp knapp-sekundar" id="tomt-nullstill">${knappetekst}</button></div>
-        </div>`;
-      return;
-    }
-
-    rutenett.innerHTML = treff.map(lagKort).join("");
-  }
-
-  // ========== DETALJVISNING ==========
-  function tegnDetalj(id) {
-    const a = annonser.find(x => x.id === id);
-
-    if (!a) {
-      document.title = "Fant ikke annonsen – Pensumbørs";
-      detaljInnhold.innerHTML = `
-        <div class="tomt">
-          <strong tabindex="-1" class="detalj-tittel-fokus">Fant ikke annonsen</strong>
-          Den kan ha blitt fjernet, eller lenken er feil.
-        </div>`;
-      return;
-    }
-
-    const status = statusFor(a);
-    const epost = lagEpost(a);
-    const emne = encodeURIComponent(`Pensumbørs: ${a.tittel}`);
-    const beskrivelse = String(a.beskrivelse ?? "").trim();
-    const erFavoritt = favoritter.has(a.id);
-    document.title = `${a.tittel} – Pensumbørs`;
-
-    detaljInnhold.innerHTML = `
-      <article class="detalj${status === "Solgt" ? " er-solgt" : ""}" data-id="${trygg(a.id)}">
-        <div class="omslag" style="background:${omslagsfarge(a.emnekode)}" aria-hidden="true">
-          <div class="omslag-tittel"><span class="omslag-kode">${trygg(a.emnekode)}</span></div>
-        </div>
-
-        <div class="detalj-info">
-          <div class="detalj-topprad">
-            <span id="detalj-status">${statusMerke(status)}</span>
-            <button type="button" class="favoritt-knapp${erFavoritt ? " er-favoritt" : ""}" data-favoritt="${trygg(a.id)}">
-              ${hjerteIkon}<span class="favoritt-knapp-tekst">${erFavoritt ? "Lagret som favoritt" : "Lagre som favoritt"}</span>
-            </button>
-          </div>
-          <h1 class="detalj-tittel detalj-tittel-fokus" tabindex="-1">${trygg(a.tittel)}</h1>
-          <p class="detalj-forfatter">av ${trygg(a.forfatter)}</p>
-          <div class="detalj-pris">${formaterPris(a.pris)}</div>
-
-          <dl class="detalj-fakta">
-            <div><dt>Emnekode</dt><dd>${trygg(a.emnekode)}</dd></div>
-            <div><dt>Tilstand</dt><dd>${trygg(a.tilstand)}</dd></div>
-            <div><dt>By</dt><dd>${trygg(a.by)}</dd></div>
-            <div><dt>Selger</dt><dd>${trygg(a.selger)}</dd></div>
-            <div><dt>Lagt ut</dt><dd>${trygg(formaterDato(a.dato))}</dd></div>
-          </dl>
-
-          <div class="detalj-seksjon">
-            <h2>Beskrivelse</h2>
-            ${beskrivelse
-              ? `<p class="detalj-beskrivelse">${trygg(beskrivelse)}</p>`
-              : `<p class="detalj-beskrivelse tom">Selgeren har ikke skrevet noen beskrivelse.</p>`}
-          </div>
-
-          <div class="detalj-seksjon kontakt">
-            <button type="button" class="knapp knapp-primar" id="kontakt-knapp"
-                    aria-expanded="false" aria-controls="kontakt-boks">Kontakt selger</button>
-            <div class="kontakt-boks" id="kontakt-boks" hidden>
-              <p>Send en e-post til ${trygg(a.selger)}:</p>
-              <a href="mailto:${epost}?subject=${emne}">${epost}</a>
-              <p class="liten">Adressen er oppdiktet, fordi Pensumbørs er et studentprosjekt.</p>
-            </div>
-          </div>
-
-          <div class="selgerboks">
-            <h2 id="status-overskrift">Endre status</h2>
-            <div class="statusvalg" role="group" aria-labelledby="status-overskrift">
-              ${STATUSER.map(s =>
-                `<button type="button" data-status="${s}" aria-pressed="${s === status}">${s}</button>`
-              ).join("")}
-            </div>
-            <p class="statushjelp">Solgte bøker vises blekere og havner nederst i listen.</p>
-          </div>
-        </div>
-      </article>`;
-  }
-
-  // Klikk inne i detaljvisningen: kontaktknapp og statusknapper
-  detaljInnhold.addEventListener("click", e => {
-    // «Kontakt selger» viser eller skjuler e-postadressen
-    if (e.target.closest("#kontakt-knapp")) {
-      const knapp = document.getElementById("kontakt-knapp");
-      const boks = document.getElementById("kontakt-boks");
-      const apen = boks.hidden;
-      boks.hidden = !apen;
-      knapp.setAttribute("aria-expanded", String(apen));
-      knapp.textContent = apen ? "Skjul kontaktinfo" : "Kontakt selger";
-      return;
-    }
-
-    // Statusknappene
-    const statusKnapp = e.target.closest("button[data-status]");
-    if (!statusKnapp) return;
-    const artikkel = detaljInnhold.querySelector(".detalj");
-    const a = annonser.find(x => x.id === artikkel.dataset.id);
-    const nyStatus = statusKnapp.dataset.status;
-    if (!a || statusFor(a) === nyStatus) return;
-
-    a.status = nyStatus;
-    const lagret = lagreAnnonser(annonser);
-
-    // Oppdater detaljvisningen uten å tegne alt på nytt
-    document.getElementById("detalj-status").innerHTML = statusMerke(nyStatus);
-    artikkel.classList.toggle("er-solgt", nyStatus === "Solgt");
-    detaljInnhold.querySelectorAll("button[data-status]").forEach(b =>
-      b.setAttribute("aria-pressed", String(b.dataset.status === nyStatus))
-    );
-
-    visAnnonser(); // listen bak oppdateres også
-    visMelding(lagret
-      ? `Status endret til «${nyStatus}».`
-      : "Statusen ble endret, men kunne ikke lagres i nettleseren.");
-  });
-
-  // ========== BYTTE MELLOM VISNINGER ==========
-  // Adressen bestemmer hva som vises:
-  //   (ingenting)     → alle annonser
-  //   #favoritter     → mine favoritter
-  //   #annonse-a3     → detaljer for annonse a3
-  // Da fungerer også nettleserens tilbakeknapp, og du kan dele lenker.
-  let listemodus = "alle";    // «alle» eller «favoritter»
-  let kommerFraListe = false; // true hvis brukeren klikket seg inn fra en liste
-  let listeScroll = 0;        // hvor langt ned i listen brukeren var
-  let sistApnetId = null;
-
-  function annonseIdFraAdresse() {
-    const treff = location.hash.match(/^#annonse-(.+)$/);
-    if (!treff) return null;
-    try { return decodeURIComponent(treff[1]); } catch { return null; }
-  }
-
-  function modusFraAdresse() {
-    return location.hash === "#favoritter" ? "favoritter" : "alle";
-  }
-
-  function adresseFor(modus) {
-    return location.pathname + location.search + (modus === "favoritter" ? "#favoritter" : "");
-  }
-
-  function oppdaterListeoverskrift() {
-    const favorittmodus = listemodus === "favoritter";
-    sidetittel.textContent = favorittmodus ? "Mine favoritter" : "Brukte pensumbøker";
-    visAlleLenke.hidden = !favorittmodus;
-    document.title = favorittmodus ? "Mine favoritter – Pensumbørs" : STANDARDTITTEL;
-    if (favorittmodus) favorittLenke.setAttribute("aria-current", "page");
-    else favorittLenke.removeAttribute("aria-current");
-  }
-
-  function visRiktigVisning() {
-    const id = annonseIdFraAdresse();
-    if (id) {
-      lukkFilter(false);
-      sistApnetId = id;
-      listevisning.hidden = true;
-      detaljvisning.hidden = false;
-      favorittLenke.removeAttribute("aria-current");
-      document.getElementById("tilbake-tekst").textContent =
-        listemodus === "favoritter" ? "Tilbake til favorittene" : "Tilbake til annonsene";
-      tegnDetalj(id);
-      window.scrollTo(0, 0);
-      const overskrift = detaljInnhold.querySelector(".detalj-tittel-fokus");
-      if (overskrift) overskrift.focus({ preventScroll: true });
-    } else {
-      const varIDetaljer = !detaljvisning.hidden;
-      const nyModus = modusFraAdresse();
-      const byttetModus = nyModus !== listemodus;
-      listemodus = nyModus;
-      detaljvisning.hidden = true;
-      listevisning.hidden = false;
-      oppdaterListeoverskrift();
-      visAnnonser();
-      if (byttetModus) {
-        window.scrollTo(0, 0);
-      } else if (varIDetaljer) {
-        window.scrollTo(0, listeScroll);
-        // Sett fokus tilbake på kortet brukeren åpnet (nyttig for tastaturbrukere)
-        const kort = sistApnetId && rutenett.querySelector(`a[href="#annonse-${CSS.escape(encodeURIComponent(sistApnetId))}"]`);
-        if (kort) kort.focus({ preventScroll: true });
-      }
-      kommerFraListe = false;
-    }
-  }
-
-  window.addEventListener("hashchange", () => {
-    // Hvis en liste var synlig og vi går til en annonse, husk hvor i listen vi var
-    if (annonseIdFraAdresse() && !listevisning.hidden) {
-      kommerFraListe = true;
-      listeScroll = window.scrollY;
-    }
-    visRiktigVisning();
-  });
-
-  // Gå til en liste. «erstatt» betyr: ikke legg til et nytt steg i nettleserhistorikken.
-  function gaTilListe(modus, erstatt = false) {
-    const url = adresseFor(modus);
-    if (url !== location.pathname + location.search + location.hash) {
-      if (erstatt) history.replaceState(null, "", url);
-      else history.pushState(null, "", url);
-    }
-    visRiktigVisning();
-  }
-
-  // Fra detaljvisningen: gå rett til listen du kom fra
-  function visListeDirekte(tilToppen = true) {
-    if (annonseIdFraAdresse()) {
-      if (tilToppen) listeScroll = 0;
-      gaTilListe(listemodus, true);
-    }
-  }
-
-  function tilbakeTilListe() {
-    if (kommerFraListe) history.back();   // som å trykke på nettleserens tilbakeknapp
-    else visListeDirekte(false);          // åpnet via lenke: gå rett til listen
-  }
-
-  document.getElementById("tilbake-knapp").addEventListener("click", tilbakeTilListe);
-
-  visAlleLenke.addEventListener("click", e => {
-    e.preventDefault();
-    gaTilListe("alle");
-  });
-
-  // ========== FAVORITTKNAPPER (hjertene) ==========
-  function oppdaterFavorittTeller() {
-    const antall = antallFavoritter();
-    favorittAntall.textContent = antall;
-    favorittAntall.hidden = antall === 0;
-  }
-
-  // Oppdaterer alle hjerter for én annonse (på kortet og i detaljvisningen)
-  function oppdaterFavorittKnapper(id) {
-    const erFavoritt = favoritter.has(id);
-    document.querySelectorAll("[data-favoritt]").forEach(knapp => {
-      if (knapp.dataset.favoritt !== id) return;
-      if (knapp.classList.contains("hjerte")) {
-        knapp.setAttribute("aria-pressed", String(erFavoritt));
-      } else {
-        knapp.classList.toggle("er-favoritt", erFavoritt);
-        knapp.querySelector(".favoritt-knapp-tekst").textContent =
-          erFavoritt ? "Lagret som favoritt" : "Lagre som favoritt";
-      }
-    });
-  }
-
-  document.addEventListener("click", e => {
-    const knapp = e.target.closest("[data-favoritt]");
-    if (!knapp) return;
-    const id = knapp.dataset.favoritt;
-    if (!annonser.some(a => a.id === id)) return;
-
-    const blirFavoritt = !favoritter.has(id);
-    if (blirFavoritt) favoritter.add(id);
-    else favoritter.delete(id);
-    const lagret = lagreFavoritter();
-
-    oppdaterFavorittKnapper(id);
-    oppdaterFavorittTeller();
-
-    // Lite «hopp» på hjertet
-    knapp.classList.remove("pop");
-    void knapp.offsetWidth; // starter animasjonen på nytt
-    knapp.classList.add("pop");
-
-    // I «Mine favoritter» må listen tegnes på nytt (annonsen skal forsvinne eller dukke opp)
-    if (listemodus === "favoritter") {
-      const varIRutenettet = rutenett.contains(knapp);
-      visAnnonser();
-      if (varIRutenettet) sidetittel.focus({ preventScroll: true });
-    }
-
-    visMelding(!lagret
-      ? "Favoritten ble endret, men kunne ikke lagres i nettleseren."
-      : blirFavoritt ? "Lagt til i favoritter." : "Fjernet fra favoritter.");
-  });
-
-  // ========== HENDELSER: SØK, FILTRE OG SORTERING ==========
-  // Søk mens du skriver (fra detaljvisningen går du tilbake til listen)
-  sokefelt.addEventListener("input", () => {
-    visListeDirekte();
-    visAnnonser();
-  });
-
-  // Alle endringer i filterpanelet oppdaterer listen med en gang
-  const filterpanel = document.getElementById("filterpanel");
-  filterpanel.addEventListener("input", visAnnonser);
-  filterpanel.addEventListener("change", visAnnonser);
-
-  sorteringValg.addEventListener("change", visAnnonser);
-
-  nullstillFiltreKnapp.addEventListener("click", () => {
-    nullstillFiltre();
-    visAnnonser();
-  });
-
-  // Knappen i «ingen treff»-meldingen
-  rutenett.addEventListener("click", e => {
-    if (e.target.closest("#tomt-nullstill")) {
-      nullstillSokOgFiltre();
-      visAnnonser();
-    }
-    if (e.target.closest("#tomt-alle")) gaTilListe("alle");
-  });
-
-  // Klikk på logoen tømmer søket og går til toppen av alle annonser
-  document.querySelector(".logo").addEventListener("click", e => {
-    e.preventDefault();
-    sokefelt.value = "";
-    listeScroll = 0;
-    gaTilListe("alle");
-    visAnnonser();
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  });
-
-  // ========== FILTERPANEL PÅ MOBIL ==========
-  const filtrerKnapp = document.getElementById("filtrer-knapp");
-  const mobilvisning = window.matchMedia("(max-width: 760px)");
-
-  function filterErApent() {
-    return filterpanel.classList.contains("apen");
-  }
-
-  // Gjør alt utenfor panelet «inert» (eller vanlig igjen). Da kan verken Tab-tasten
-  // eller skjermlesere havne på annonsene bak panelet mens det er åpent.
-  function settSidenBakInert(inert) {
-    for (let el = filterpanel; el !== document.body; el = el.parentElement) {
-      for (const annet of el.parentElement.children) {
-        if (annet !== el) annet.inert = inert;
-      }
-    }
-  }
-
-  function apneFilter() {
-    filterpanel.classList.add("apen");
-    filterpanel.setAttribute("role", "dialog");
-    filterpanel.setAttribute("aria-modal", "true");
-    filtrerKnapp.setAttribute("aria-expanded", "true");
-    document.body.classList.add("modal-apen");
-    settSidenBakInert(true);
-    document.getElementById("filter-lukk").focus();
-  }
-
-  function lukkFilter(flyttFokus = true) {
-    if (!filterErApent()) return;
-    settSidenBakInert(false); // må skje før fokus flyttes tilbake til Filtrer-knappen
-    filterpanel.classList.remove("apen");
-    filterpanel.removeAttribute("role");
-    filterpanel.removeAttribute("aria-modal");
-    filtrerKnapp.setAttribute("aria-expanded", "false");
-    document.body.classList.remove("modal-apen");
-    if (flyttFokus) filtrerKnapp.focus();
-  }
-
-  filtrerKnapp.addEventListener("click", apneFilter);
-  document.getElementById("filter-lukk").addEventListener("click", () => lukkFilter());
-  visResultaterKnapp.addEventListener("click", () => lukkFilter());
-  document.addEventListener("keydown", e => {
-    if (e.key === "Escape" && filterErApent()) lukkFilter();
-  });
-  // Hvis skjermen blir bred mens panelet er åpent (f.eks. snur nettbrettet), lukk det
-  mobilvisning.addEventListener("change", e => {
-    if (!e.matches) lukkFilter(false);
-  });
-
-  // ========== BEKREFTELSESMELDING ==========
-  const melding = document.getElementById("melding");
-  let meldingTimer = null;
-  function visMelding(tekst, varighet = 3200) {
-    melding.textContent = tekst;
-    melding.classList.add("synlig");
-    clearTimeout(meldingTimer);
-    meldingTimer = setTimeout(() => melding.classList.remove("synlig"), varighet);
-  }
-
-  // ========== SKJEMA: ÅPNE OG LUKKE ==========
-  const dialog = document.getElementById("skjema-dialog");
-  const skjema = document.getElementById("annonseskjema");
-
-  function apneSkjema() {
-    fjernAlleFeil();
-    dialog.showModal();
-    document.body.classList.add("modal-apen");
-    skjema.elements.tittel.focus();
-  }
-  function lukkSkjema() {
-    dialog.close();
-  }
-
-  document.getElementById("legg-ut-knapp").addEventListener("click", apneSkjema);
-  document.getElementById("lukk-knapp").addEventListener("click", lukkSkjema);
-  document.getElementById("avbryt-knapp").addEventListener("click", lukkSkjema);
-  // Kjøres uansett hvordan skjemaet lukkes (også med Esc-tasten)
-  dialog.addEventListener("close", () => document.body.classList.remove("modal-apen"));
-
-  // ========== SKJEMA: VALIDERING ==========
-  // Gjør om tekst som «1 200», «350,50» eller «350 kr» til et tall. Gir null hvis ugyldig.
-  function tolkPris(tekst) {
-    const renset = String(tekst)
-      .replace(/\s/g, "")
-      .replace(/kr\.?$/i, "")
-      .replace(",", ".");
-    if (!/^\d+(\.\d{1,2})?$/.test(renset)) return null;
-    const tall = Number(renset);
-    return tall > 0 ? tall : null;
-  }
-
-  const MAKSPRIS = 10000; // en høyere pris er nesten alltid en skrivefeil
-
-  // «mat 1100» → «MAT1100»
-  function rensEmnekode(tekst) {
-    return String(tekst).toUpperCase().replace(/\s+/g, "");
-  }
-
-  // Én regel per felt. Hver regel gir en feilmelding, eller tom tekst hvis alt er i orden.
-  const REGLER = {
-    tittel:    v => v ? "" : "Skriv inn tittelen på boken.",
-    forfatter: v => v ? "" : "Skriv inn hvem som har skrevet boken.",
-    emnekode:  v => {
-      if (!v) return "Skriv inn emnekoden, for eksempel MAT1100.";
-      if (!/^[A-ZÆØÅ0-9-]+$/.test(rensEmnekode(v))) return "Emnekoden kan bare inneholde bokstaver, tall og bindestrek.";
-      return "";
-    },
-    pris:      v => {
-      if (!v) return "Skriv inn en pris.";
-      const tall = tolkPris(v);
-      if (tall === null) return "Prisen må være et tall større enn 0, for eksempel 350.";
-      if (tall > MAKSPRIS) return `Prisen kan ikke være høyere enn ${formaterPris(MAKSPRIS)}.`;
-      return "";
-    },
-    tilstand:  v => v ? "" : "Velg hvilken tilstand boken er i.",
-    by:        v => v ? "" : "Skriv inn hvilken by du selger fra.",
-    selger:    v => v ? "" : "Skriv inn navnet ditt."
-  };
-
-  function verdi(navn) {
-    return skjema.elements[navn].value.trim();
-  }
-
-  function visFeil(navn, tekst) {
-    const felt = skjema.elements[navn];
-    document.getElementById("feil-" + navn).textContent = tekst;
-    if (tekst) felt.setAttribute("aria-invalid", "true");
-    else felt.removeAttribute("aria-invalid");
-  }
-
-  function fjernAlleFeil() {
-    Object.keys(REGLER).forEach(navn => visFeil(navn, ""));
-  }
-
-  // Når et felt med feil blir rettet, forsvinner feilmeldingen med en gang
-  Object.keys(REGLER).forEach(navn => {
-    const felt = skjema.elements[navn];
-    const sjekk = () => {
-      if (felt.getAttribute("aria-invalid") === "true") visFeil(navn, REGLER[navn](verdi(navn)));
-    };
-    felt.addEventListener("input", sjekk);
-    felt.addEventListener("change", sjekk);
-  });
-
-  // ========== SKJEMA: SENDE INN ==========
-  skjema.addEventListener("submit", e => {
-    e.preventDefault();
-
-    // Sjekk alle felt og husk det første med feil
-    let forsteFeil = null;
-    for (const navn of Object.keys(REGLER)) {
-      const feiltekst = REGLER[navn](verdi(navn));
-      visFeil(navn, feiltekst);
-      if (feiltekst && !forsteFeil) forsteFeil = navn;
-    }
-    if (forsteFeil) {
-      skjema.elements[forsteFeil].focus();
-      return;
-    }
-
-    const nyAnnonse = {
-      id: nyId(),
-      tittel: verdi("tittel"),
-      forfatter: verdi("forfatter"),
-      emnekode: rensEmnekode(verdi("emnekode")),
-      pris: tolkPris(verdi("pris")),
-      tilstand: verdi("tilstand"),
-      by: verdi("by"),
-      beskrivelse: verdi("beskrivelse"),
-      selger: verdi("selger"),
-      dato: dagensDato(),
-      opprettet: Date.now(),
-      status: "Til salgs"
-    };
-
-    annonser.unshift(nyAnnonse);
-    const lagret = lagreAnnonser(annonser);
-
-    skjema.reset();
-    lukkSkjema();
-
-    // Gå til alle annonser, tøm søk og filtre og sorter på nyeste, slik at den nye annonsen synes øverst
-    listeScroll = 0;
-    gaTilListe("alle", Boolean(annonseIdFraAdresse()));
-    nullstillSokOgFiltre();
-    sorteringValg.value = "nyeste";
-    byggByvalg(); // en ny by kan ha kommet til
-    sistLagtUtId = nyAnnonse.id;
-    visAnnonser();
-    sistLagtUtId = null;
-    window.scrollTo({ top: 0, behavior: "smooth" });
-
-    if (lagret) {
-      visMelding("Annonsen din er lagt ut.");
-    } else {
-      visMelding("Annonsen er lagt ut, men kunne ikke lagres i nettleseren. Den forsvinner hvis du laster inn siden på nytt.", 6000);
-    }
-  });
-
-  // ========== FLERE FANER ==========
-  // Hver fane har sin egen kopi av annonsene og favorittene. Når en annen fane lagrer,
-  // henter vi dataene på nytt – ellers ville neste lagring her skrevet over endringene derfra.
-  window.addEventListener("storage", e => {
-    if (e.key === LAGRINGSNOKKEL) {
-      annonser = hentAnnonser();
-      byggByvalg();
-    } else if (e.key === FAVORITTNOKKEL) {
-      favoritter = hentFavoritter();
-    } else {
-      return;
-    }
-    oppdaterFavorittTeller();
-    const id = annonseIdFraAdresse();
-    if (id) tegnDetalj(id);
-    else visAnnonser();
-  });
-
-  // ========== START ==========
-  byggByvalg();
-  oppdaterFavorittTeller();
-  visRiktigVisning(); // viser riktig visning ut fra adressen (alle, favoritter eller én annonse)
-</script>
 </body>
 </html>
