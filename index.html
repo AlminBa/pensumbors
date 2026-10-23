@@ -1109,7 +1109,7 @@
     .omslag::before { width: 11px; }
     .omslag-kode { font-size: 1.05rem; }
     .omslag-tittel { padding: 6px 8px; }
-    .kort .status { top: 6px; right: 6px; font-size: 0.68rem; padding: 4px 7px; }
+    .kort .status { top: 6px; left: 6px; font-size: 0.68rem; padding: 4px 7px; }
     .kort-innhold { padding: 10px 12px 12px; }
     .kort-tittel { font-size: 0.95rem; }
     .kort-pris { font-size: 1.08rem; }
@@ -1284,7 +1284,8 @@
           </div>
         </div>
 
-        <div class="filter-bunn">
+        <!-- aria-live: skjermlesere hører antall treff her, fordi resten av siden er inert mens panelet er åpent -->
+        <div class="filter-bunn" aria-live="polite">
           <button type="button" class="knapp knapp-primar" id="vis-resultater">Vis annonser</button>
         </div>
       </aside>
@@ -2268,17 +2269,29 @@
     return filterpanel.classList.contains("apen");
   }
 
+  // Gjør alt utenfor panelet «inert» (eller vanlig igjen). Da kan verken Tab-tasten
+  // eller skjermlesere havne på annonsene bak panelet mens det er åpent.
+  function settSidenBakInert(inert) {
+    for (let el = filterpanel; el !== document.body; el = el.parentElement) {
+      for (const annet of el.parentElement.children) {
+        if (annet !== el) annet.inert = inert;
+      }
+    }
+  }
+
   function apneFilter() {
     filterpanel.classList.add("apen");
     filterpanel.setAttribute("role", "dialog");
     filterpanel.setAttribute("aria-modal", "true");
     filtrerKnapp.setAttribute("aria-expanded", "true");
     document.body.classList.add("modal-apen");
+    settSidenBakInert(true);
     document.getElementById("filter-lukk").focus();
   }
 
   function lukkFilter(flyttFokus = true) {
     if (!filterErApent()) return;
+    settSidenBakInert(false); // må skje før fokus flyttes tilbake til Filtrer-knappen
     filterpanel.classList.remove("apen");
     filterpanel.removeAttribute("role");
     filterpanel.removeAttribute("aria-modal");
@@ -2340,14 +2353,27 @@
     return tall > 0 ? tall : null;
   }
 
+  const MAKSPRIS = 10000; // en høyere pris er nesten alltid en skrivefeil
+
+  // «mat 1100» → «MAT1100»
+  function rensEmnekode(tekst) {
+    return String(tekst).toUpperCase().replace(/\s+/g, "");
+  }
+
   // Én regel per felt. Hver regel gir en feilmelding, eller tom tekst hvis alt er i orden.
   const REGLER = {
     tittel:    v => v ? "" : "Skriv inn tittelen på boken.",
     forfatter: v => v ? "" : "Skriv inn hvem som har skrevet boken.",
-    emnekode:  v => v ? "" : "Skriv inn emnekoden, for eksempel MAT1100.",
+    emnekode:  v => {
+      if (!v) return "Skriv inn emnekoden, for eksempel MAT1100.";
+      if (!/^[A-ZÆØÅ0-9-]+$/.test(rensEmnekode(v))) return "Emnekoden kan bare inneholde bokstaver, tall og bindestrek.";
+      return "";
+    },
     pris:      v => {
       if (!v) return "Skriv inn en pris.";
-      if (tolkPris(v) === null) return "Prisen må være et tall større enn 0, for eksempel 350.";
+      const tall = tolkPris(v);
+      if (tall === null) return "Prisen må være et tall større enn 0, for eksempel 350.";
+      if (tall > MAKSPRIS) return `Prisen kan ikke være høyere enn ${formaterPris(MAKSPRIS)}.`;
       return "";
     },
     tilstand:  v => v ? "" : "Velg hvilken tilstand boken er i.",
@@ -2400,7 +2426,7 @@
       id: nyId(),
       tittel: verdi("tittel"),
       forfatter: verdi("forfatter"),
-      emnekode: verdi("emnekode").toUpperCase().replace(/\s+/g, ""), // «mat 1100» → «MAT1100»
+      emnekode: rensEmnekode(verdi("emnekode")),
       pris: tolkPris(verdi("pris")),
       tilstand: verdi("tilstand"),
       by: verdi("by"),
@@ -2433,6 +2459,24 @@
     } else {
       visMelding("Annonsen er lagt ut, men kunne ikke lagres i nettleseren. Den forsvinner hvis du laster inn siden på nytt.", 6000);
     }
+  });
+
+  // ========== FLERE FANER ==========
+  // Hver fane har sin egen kopi av annonsene og favorittene. Når en annen fane lagrer,
+  // henter vi dataene på nytt – ellers ville neste lagring her skrevet over endringene derfra.
+  window.addEventListener("storage", e => {
+    if (e.key === LAGRINGSNOKKEL) {
+      annonser = hentAnnonser();
+      byggByvalg();
+    } else if (e.key === FAVORITTNOKKEL) {
+      favoritter = hentFavoritter();
+    } else {
+      return;
+    }
+    oppdaterFavorittTeller();
+    const id = annonseIdFraAdresse();
+    if (id) tegnDetalj(id);
+    else visAnnonser();
   });
 
   // ========== START ==========
