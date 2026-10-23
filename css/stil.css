@@ -159,7 +159,8 @@ body.modal-apen { overflow: hidden; }
 .meny-minside[aria-current="page"] svg path { fill: currentColor; }
 /* På store skjermer er logoen veien til forsiden */
 .meny-forside { display: none; }
-.favoritt-antall {
+.favoritt-antall,
+.meny-merke {
   min-width: 20px;
   height: 20px;
   padding: 0 6px;
@@ -171,6 +172,8 @@ body.modal-apen { overflow: hidden; }
   display: inline-grid;
   place-items: center;
 }
+/* Varsel om nye treff i lagrede søk: samme form, i messingfarge */
+.meny-merke { background: var(--messing); color: var(--gronn-mork); }
 
 /* Tekst som bare skjermlesere skal lese */
 .skjult-tekst {
@@ -373,11 +376,38 @@ main {
   margin-bottom: 16px;
   flex-wrap: wrap;
 }
-.antall {
+.treff-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   margin-right: auto;
+}
+.antall {
   color: var(--tekst-dempet);
   font-size: 0.95rem;
 }
+
+/* «Lagre søk»: en av/på-knapp med bokmerke, fylt når søket er lagret */
+.lagre-sok-knapp {
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1.5px solid var(--gronn);
+  border-radius: 999px;
+  background: var(--kort);
+  color: var(--gronn);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.lagre-sok-knapp svg { width: 15px; height: 15px; }
+.lagre-sok-knapp svg path { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
+.lagre-sok-knapp[aria-pressed="true"] { background: var(--gronn); color: var(--bakgrunn); }
+.lagre-sok-knapp[aria-pressed="true"] svg path { fill: currentColor; }
+.lagre-sok-knapp:focus-visible { outline: 3px solid var(--messing); outline-offset: 2px; }
 .sortering {
   display: flex;
   align-items: center;
@@ -1021,6 +1051,37 @@ main {
 .min-status .velger { width: auto; padding: 6px 10px; }
 .min-handlinger .lenkeknapp { padding: 4px 2px; }
 
+.lagrede-sok { list-style: none; display: grid; gap: 10px; }
+.lagret-sok {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--kort);
+  border: 1px solid var(--kant);
+  border-radius: 12px;
+}
+.lagret-sok-info { flex: 1; min-width: 0; }
+.lagret-sok-navn {
+  font-weight: 700;
+  color: var(--gronn-mork);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.lagret-sok-navn:hover { text-decoration: underline; }
+.lagret-sok-navn:focus-visible { outline: 3px solid var(--messing); outline-offset: 2px; border-radius: 4px; }
+.lagret-sok-detaljer { font-size: 0.88rem; color: var(--tekst-dempet); margin-top: 2px; }
+.nye-merke {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--messing);
+  color: var(--gronn-mork);
+}
+.min-side-del-topp h2:focus { outline: none; }
+
 /* ========== BEKREFTELSESDIALOG (f.eks. før sletting) ========== */
 dialog.bekreft-dialog {
   border: none;
@@ -1068,6 +1129,8 @@ dialog.bekreft-dialog::backdrop { background: rgba(19, 51, 38, 0.55); }
   .avkrysning:hover { color: var(--gronn); }
   .kontakt-boks a:hover { color: var(--gronn); }
   .brikke:hover { background: #D2E1D5; }
+  .lagre-sok-knapp:hover { background: var(--gronn-lys); }
+  .lagre-sok-knapp[aria-pressed="true"]:hover { background: var(--gronn-mork); }
 }
 @media (prefers-reduced-motion: reduce) {
   .kort-ramme, .kort, .hjerte, .knapp, .legg-ut-knapp { transition: none; }
@@ -1326,7 +1389,7 @@ dialog.skjema-dialog::backdrop {
 
   .filtrer-knapp { display: inline-flex; }
   .verktoylinje { justify-content: space-between; }
-  .antall { order: 3; flex-basis: 100%; margin-right: 0; }
+  .treff-info { order: 3; flex-basis: 100%; margin-right: 0; justify-content: space-between; }
 
   /* Panelet glir opp fra bunnen og dekker hele skjermen */
   .filterpanel {
@@ -1426,7 +1489,8 @@ dialog.skjema-dialog::backdrop {
     clip-path: inset(50%);
     white-space: nowrap;
   }
-  .favoritt-antall {
+  .favoritt-antall,
+  .meny-merke {
     position: absolute;
     top: 4px;
     left: calc(50% + 6px);
@@ -1460,6 +1524,8 @@ dialog.skjema-dialog::backdrop {
   .selgerboks { padding: 14px; }
   .min-rad { gap: 12px; padding: 12px; }
   .min-status { flex-basis: 100%; } /* Rediger og Slett samlet på linjen under */
+  .lagret-sok { flex-wrap: wrap; gap: 8px 12px; padding: 12px 14px; }
+  .lagret-sok-info { flex-basis: 100%; }
   .min-omslag { width: 56px; height: 76px; font-size: 0.68rem; }
   .skjemabilde, .legg-til-bilde { width: 88px; height: 88px; }
   .detalj .omslag { height: 170px; max-width: none; }

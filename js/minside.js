@@ -1,4 +1,5 @@
 // Min side: dine egne annonser – og å endre status på, redigere og slette dem.
+// De lagrede søkene på Min side ligger i js/lagredesok.js.
 
 // ========== ELEMENTER ==========
 const minsideVisning = document.getElementById("minside-visning");
@@ -50,6 +51,7 @@ function tegnMinSide() {
          <div><button type="button" class="knapp knapp-primar" data-handling="ny">Legg ut annonse</button></div>
        </div>`;
   lastBilder(mineAnnonserListe);
+  tegnLagredeSok();
 }
 
 function annonseFor(element) {

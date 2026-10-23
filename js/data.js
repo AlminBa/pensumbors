@@ -10,6 +10,7 @@ const Data = (() => {
   const ANNONSENOKKEL = "pensumbors_annonser_v1";
   const FAVORITTNOKKEL = "pensumbors_favoritter_v1";
   const BRUKERNOKKEL = "pensumbors_bruker_v1";
+  const SOKNOKKEL = "pensumbors_lagrede_sok_v1";
 
   let brukerId = null;
 
@@ -128,6 +129,11 @@ const Data = (() => {
     }
   ];
 
+  function lesLagredeSok() {
+    const data = les(SOKNOKKEL);
+    return Array.isArray(data) ? data : [];
+  }
+
   function lesFavoritter() {
     const data = les(FAVORITTNOKKEL);
     return Array.isArray(data) ? data.map(String) : [];
@@ -214,11 +220,36 @@ const Data = (() => {
       throw new Error("Fikk ikke kontakt med bokdatabasene");
     },
 
-    // Kaller «funksjon» med "annonser" eller "favoritter" når en annen fane har lagret noe
+    // Lagrede søk: { id, navn, sokedel, opprettet, sistSett }. «sokedel» er søket slik det står
+    // i adressen (?q=…), «sistSett» er når brukeren sist så treffene (for å finne nye annonser).
+    async hentLagredeSok() {
+      return lesLagredeSok();
+    },
+
+    async lagreSok(sok) {
+      const liste = lesLagredeSok().filter(s => s.id !== sok.id && s.sokedel !== sok.sokedel);
+      liste.unshift(sok);
+      return skriv(SOKNOKKEL, liste);
+    },
+
+    async slettSok(id) {
+      return skriv(SOKNOKKEL, lesLagredeSok().filter(s => s.id !== id));
+    },
+
+    async merkSokSomSett(id, tidspunkt) {
+      const liste = lesLagredeSok();
+      const sok = liste.find(s => s.id === id);
+      if (!sok) return false;
+      sok.sistSett = tidspunkt;
+      return skriv(SOKNOKKEL, liste);
+    },
+
+    // Kaller «funksjon» med "annonser", "favoritter" eller "lagrede-sok" når en annen fane har lagret noe
     vedEndring(funksjon) {
       window.addEventListener("storage", e => {
         if (e.key === ANNONSENOKKEL) funksjon("annonser");
         else if (e.key === FAVORITTNOKKEL) funksjon("favoritter");
+        else if (e.key === SOKNOKKEL) funksjon("lagrede-sok");
       });
     }
   };

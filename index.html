@@ -14,6 +14,7 @@
 <script src="js/sok.js" defer></script>
 <script src="js/skjema.js" defer></script>
 <script src="js/minside.js" defer></script>
+<script src="js/lagredesok.js" defer></script>
 <script src="js/app.js" defer></script>
 </head>
 <body>
@@ -56,6 +57,7 @@
           <circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"></path>
         </svg>
         <span class="menytekst">Min side</span>
+        <span class="meny-merke" id="min-side-merke" hidden></span>
       </a>
       <button type="button" class="legg-ut-knapp" id="legg-ut-knapp">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true">
@@ -167,7 +169,13 @@
             Filtrer
             <span class="filter-merke" id="filter-merke" hidden></span>
           </button>
-          <span class="antall" id="antall" aria-live="polite"></span>
+          <div class="treff-info">
+            <span class="antall" id="antall" aria-live="polite"></span>
+            <button type="button" class="lagre-sok-knapp" id="lagre-sok-knapp" aria-pressed="false" hidden>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h12v17l-6-4.2-6 4.2z"></path></svg>
+              <span id="lagre-sok-tekst">Lagre søk</span>
+            </button>
+          </div>
           <div class="sortering">
             <label for="sortering">Sorter</label>
             <select class="velger" id="sortering">
@@ -214,6 +222,14 @@
         <span class="min-side-antall" id="mine-annonser-antall"></span>
       </div>
       <div id="mine-annonser"></div>
+    </section>
+
+    <section class="min-side-del" aria-labelledby="lagrede-sok-overskrift">
+      <div class="min-side-del-topp">
+        <h2 id="lagrede-sok-overskrift" tabindex="-1">Lagrede søk</h2>
+        <span class="min-side-antall" id="lagrede-sok-antall"></span>
+      </div>
+      <div id="lagrede-sok"></div>
     </section>
   </section>
 </main>

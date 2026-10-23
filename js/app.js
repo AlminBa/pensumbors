@@ -5,6 +5,7 @@
 let annonser = [];
 let favoritter = new Set();
 let bruker = { id: null }; // den som bruker appen (se Data.hentBruker)
+let lagredeSok = [];       // se js/lagredesok.js
 let sistLagtUtId = null; // brukes til å markere annonsen som nettopp ble lagt ut
 
 // Teller bare favoritter som fortsatt finnes som annonser
@@ -232,10 +233,13 @@ Data.vedEndring(async hva => {
   if (hva === "annonser") {
     annonser = await Data.hentAnnonser();
     byggValg();
-  } else {
+  } else if (hva === "favoritter") {
     favoritter = await Data.hentFavoritter();
+  } else {
+    lagredeSok = await Data.hentLagredeSok();
   }
   oppdaterFavorittTeller();
+  oppdaterSokVarsel();
   tegnPaNytt();
 });
 
@@ -244,8 +248,10 @@ async function start() {
   bruker = await Data.hentBruker();
   annonser = await Data.hentAnnonser();
   favoritter = await Data.hentFavoritter();
+  lagredeSok = await Data.hentLagredeSok();
   settKriterier(kriterierFraAdresse()); // søk og filtre fra adressen (?q=…)
   oppdaterFavorittTeller();
+  oppdaterSokVarsel();
   visRiktigVisning(); // viser riktig visning ut fra adressen (alle, favoritter, Min side eller én annonse)
 }
 

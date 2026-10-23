@@ -23,9 +23,9 @@ function formaterPris(pris) {
   return tall.toLocaleString("nb-NO", { maximumFractionDigits: 2 }) + "\u00A0kr";
 }
 
-// «2026-10-18» → «18. oktober 2026»
+// «2026-10-18» (eller et tidspunkt i millisekunder) → «18. oktober 2026»
 function formaterDato(dato) {
-  const d = new Date(String(dato) + "T12:00:00");
+  const d = typeof dato === "number" ? new Date(dato) : new Date(String(dato) + "T12:00:00");
   if (isNaN(d)) return String(dato ?? "");
   return d.toLocaleDateString("nb-NO", { day: "numeric", month: "long", year: "numeric" });
 }

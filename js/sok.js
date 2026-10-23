@@ -290,7 +290,10 @@ function filterbrikker(k) {
   }
   k.tilstander.forEach(t => brikker.push({ tekst: t, fjern: "tilstand:" + t }));
   k.larester.forEach(l => brikker.push({ tekst: l, fjern: "larested:" + l }));
-  if (k.by) brikker.push({ tekst: byFilter.selectedOptions[0]?.dataset.navn ?? storForbokstav(k.by), fjern: "by" });
+  if (k.by) {
+    const navn = byFilter.querySelector(`option[value="${CSS.escape(k.by)}"]`)?.dataset.navn;
+    brikker.push({ tekst: navn ?? storForbokstav(k.by), fjern: "by" });
+  }
   return brikker;
 }
 

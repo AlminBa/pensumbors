@@ -110,6 +110,7 @@ function visAnnonser() {
   nullstillFiltreKnapp.hidden = !harFilterInnhold();
   oppdaterFiltertellere(grunnlag, k);
   tegnFilterbrikker(k);
+  oppdaterLagreSokKnapp(k);
   visFlere.hidden = true;
 
   // 4. Tegn kortene, eller en melding hvis ingenting passer
