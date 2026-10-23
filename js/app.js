@@ -4,6 +4,7 @@
 // Annonsene og favorittene slik de vises nå. Hentes fra datalaget (js/data.js) ved oppstart.
 let annonser = [];
 let favoritter = new Set();
+let bruker = { id: null }; // den som bruker appen (se Data.hentBruker)
 let sistLagtUtId = null; // brukes til å markere annonsen som nettopp ble lagt ut
 
 // Teller bare favoritter som fortsatt finnes som annonser
@@ -15,11 +16,12 @@ function antallFavoritter() {
 // Adressen bestemmer hva som vises:
 //   (ingenting)     → alle annonser
 //   #favoritter     → mine favoritter
+//   #min-side       → Min side (dine egne annonser)
 //   #annonse-a3     → detaljer for annonse a3
 // Søk og filtre står foran, f.eks. ?q=mat1100&by=oslo#favoritter (se js/sok.js).
 // Da fungerer også nettleserens tilbakeknapp, og du kan dele lenker.
 let listemodus = "alle";    // «alle» eller «favoritter»
-let kommerFraListe = false; // true hvis brukeren klikket seg inn fra en liste
+let tilbakeTil = null;      // «liste» eller «min-side»: hvor brukeren kom fra til en annonse
 let listeScroll = 0;        // hvor langt ned i listen brukeren var
 let sistApnetId = null;
 
@@ -29,12 +31,26 @@ function annonseIdFraAdresse() {
   try { return decodeURIComponent(treff[1]); } catch { return null; }
 }
 
+function erMinSide() {
+  return location.hash === "#min-side";
+}
+
 function modusFraAdresse() {
   return location.hash === "#favoritter" ? "favoritter" : "alle";
 }
 
-function adresseFor(modus) {
-  return location.pathname + sokedelFor(lesKriterier()) + (modus === "favoritter" ? "#favoritter" : "");
+function adresseFor(visning) {
+  const hash = { alle: "", favoritter: "#favoritter", "min-side": "#min-side" }[visning];
+  return location.pathname + sokedelFor(lesKriterier()) + hash;
+}
+
+// Markerer hvor i menyen brukeren er («alle», «favoritter», «min-side» eller null)
+function oppdaterMeny(aktiv) {
+  const lenker = { alle: forsideLenke, favoritter: favorittLenke, "min-side": minSideLenke };
+  for (const [navn, lenke] of Object.entries(lenker)) {
+    if (navn === aktiv) lenke.setAttribute("aria-current", "page");
+    else lenke.removeAttribute("aria-current");
+  }
 }
 
 function oppdaterListeoverskrift() {
@@ -42,8 +58,14 @@ function oppdaterListeoverskrift() {
   sidetittel.textContent = favorittmodus ? "Mine favoritter" : "Brukte pensumbøker";
   visAlleLenke.hidden = !favorittmodus;
   document.title = favorittmodus ? "Mine favoritter – Pensumbørs" : STANDARDTITTEL;
-  if (favorittmodus) favorittLenke.setAttribute("aria-current", "page");
-  else favorittLenke.removeAttribute("aria-current");
+  oppdaterMeny(listemodus);
+}
+
+// Viser én visning og skjuler de andre
+function visBare(visning) {
+  listevisning.hidden = visning !== listevisning;
+  detaljvisning.hidden = visning !== detaljvisning;
+  minsideVisning.hidden = visning !== minsideVisning;
 }
 
 function visRiktigVisning() {
@@ -51,25 +73,38 @@ function visRiktigVisning() {
   if (id) {
     lukkFilter(false);
     sistApnetId = id;
-    listevisning.hidden = true;
-    detaljvisning.hidden = false;
-    favorittLenke.removeAttribute("aria-current");
+    visBare(detaljvisning);
+    oppdaterMeny(null);
     document.getElementById("tilbake-tekst").textContent =
-      listemodus === "favoritter" ? "Tilbake til favorittene" : "Tilbake til annonsene";
+      tilbakeTil === "min-side" ? "Tilbake til Min side"
+      : listemodus === "favoritter" ? "Tilbake til favorittene" : "Tilbake til annonsene";
     tegnDetalj(id);
     window.scrollTo(0, 0);
     const overskrift = detaljInnhold.querySelector(".detalj-tittel-fokus");
     if (overskrift) overskrift.focus({ preventScroll: true });
+  } else if (erMinSide()) {
+    lukkFilter(false);
+    const fraAnnonse = !detaljvisning.hidden;
+    visBare(minsideVisning);
+    oppdaterMeny("min-side");
+    document.title = "Min side – Pensumbørs";
+    tegnMinSide();
+    window.scrollTo(0, 0);
+    // Tilbake fra en annonse: fokus på den annonsen i listen, ellers på overskriften
+    const rad = fraAnnonse && sistApnetId &&
+      mineAnnonserListe.querySelector(`[data-id="${CSS.escape(sistApnetId)}"] .min-tittel`);
+    (rad || minSideOverskrift).focus({ preventScroll: true });
+    tilbakeTil = null;
   } else {
     const varIDetaljer = !detaljvisning.hidden;
+    const varPaMinSide = !minsideVisning.hidden;
     const nyModus = modusFraAdresse();
     const byttetModus = nyModus !== listemodus;
     listemodus = nyModus;
-    detaljvisning.hidden = true;
-    listevisning.hidden = false;
+    visBare(listevisning);
     oppdaterListeoverskrift();
     visAnnonser();
-    if (byttetModus) {
+    if (byttetModus || varPaMinSide) {
       window.scrollTo(0, 0);
     } else if (varIDetaljer) {
       window.scrollTo(0, listeScroll);
@@ -77,15 +112,27 @@ function visRiktigVisning() {
       const kort = sistApnetId && rutenett.querySelector(`a[href="#annonse-${CSS.escape(encodeURIComponent(sistApnetId))}"]`);
       if (kort) kort.focus({ preventScroll: true });
     }
-    kommerFraListe = false;
+    tilbakeTil = null;
   }
 }
 
+// Tegner visningen som vises nå på nytt, f.eks. etter at en annonse er endret
+function tegnPaNytt() {
+  const id = annonseIdFraAdresse();
+  if (id) tegnDetalj(id);
+  else if (erMinSide()) tegnMinSide();
+  else visAnnonser();
+}
+
 window.addEventListener("hashchange", () => {
-  // Hvis en liste var synlig og vi går til en annonse, husk hvor i listen vi var
-  if (annonseIdFraAdresse() && !listevisning.hidden) {
-    kommerFraListe = true;
-    listeScroll = window.scrollY;
+  // Husk hvor brukeren kom fra når en annonse åpnes, så «Tilbake» går dit
+  if (annonseIdFraAdresse()) {
+    if (!listevisning.hidden) {
+      tilbakeTil = "liste";
+      listeScroll = window.scrollY;
+    } else if (!minsideVisning.hidden) {
+      tilbakeTil = "min-side";
+    }
   }
   visRiktigVisning();
 });
@@ -100,22 +147,28 @@ function gaTilListe(modus, erstatt = false) {
   visRiktigVisning();
 }
 
-// Fra detaljvisningen: gå rett til listen du kom fra
+// Fra en annonse eller Min side: gå rett til listen (uten et nytt steg i historikken)
 function visListeDirekte(tilToppen = true) {
-  if (annonseIdFraAdresse()) {
+  if (annonseIdFraAdresse() || erMinSide()) {
     if (tilToppen) listeScroll = 0;
-    gaTilListe(listemodus, true);
+    gaTilListe(erMinSide() ? "alle" : listemodus, true);
   }
 }
 
 function tilbakeTilListe() {
-  if (kommerFraListe) history.back();   // som å trykke på nettleserens tilbakeknapp
-  else visListeDirekte(false);          // åpnet via lenke: gå rett til listen
+  if (tilbakeTil) history.back();   // som å trykke på nettleserens tilbakeknapp
+  else visListeDirekte(false);      // åpnet via lenke: gå rett til listen
 }
 
 document.getElementById("tilbake-knapp").addEventListener("click", tilbakeTilListe);
 
 visAlleLenke.addEventListener("click", e => {
+  e.preventDefault();
+  gaTilListe("alle");
+});
+
+// «Annonser» i bunnmenyen på mobil går til listen med alle annonser
+forsideLenke.addEventListener("click", e => {
   e.preventDefault();
   gaTilListe("alle");
 });
@@ -183,18 +236,17 @@ Data.vedEndring(async hva => {
     favoritter = await Data.hentFavoritter();
   }
   oppdaterFavorittTeller();
-  const id = annonseIdFraAdresse();
-  if (id) tegnDetalj(id);
-  else visAnnonser();
+  tegnPaNytt();
 });
 
 // ========== START ==========
 async function start() {
+  bruker = await Data.hentBruker();
   annonser = await Data.hentAnnonser();
   favoritter = await Data.hentFavoritter();
   settKriterier(kriterierFraAdresse()); // søk og filtre fra adressen (?q=…)
   oppdaterFavorittTeller();
-  visRiktigVisning(); // viser riktig visning ut fra adressen (alle, favoritter eller én annonse)
+  visRiktigVisning(); // viser riktig visning ut fra adressen (alle, favoritter, Min side eller én annonse)
 }
 
 start();

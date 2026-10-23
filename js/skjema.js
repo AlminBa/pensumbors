@@ -1,17 +1,29 @@
-// Skjemaet for å legge ut en annonse.
+// Skjemaet for å legge ut en annonse – og for å redigere en du har lagt ut.
 
 // ========== SKJEMA: ÅPNE OG LUKKE ==========
 const dialog = document.getElementById("skjema-dialog");
 const skjema = document.getElementById("annonseskjema");
+const skjemaOverskrift = document.getElementById("skjema-overskrift");
+const sendKnapp = document.getElementById("send-knapp");
 const isbnHjelp = document.getElementById("isbn-hjelp");
 const hentBokinfoKnapp = document.getElementById("hent-bokinfo");
 const ISBN_HJELPETEKST = isbnHjelp.textContent;
+
+let redigererId = null; // id-en til annonsen som redigeres, eller null når en ny legges ut
 
 // Lærestedene i nedtrekkslisten lages ut fra listen i js/hjelpere.js
 skjema.elements.larested.insertAdjacentHTML("beforeend", LARESTEDER.map(l =>
   `<option value="${trygg(l.kort)}">${trygg(larestedNavn(l.kort))}</option>`).join(""));
 
-function apneSkjema() {
+// Åpner skjemaet for en ny annonse, eller for å redigere «annonse»
+function apneSkjema(annonse = null) {
+  // Et halvferdig utkast til en ny annonse beholdes, men ikke feltene fra en redigering
+  if (annonse || redigererId) skjema.reset();
+  redigererId = annonse ? annonse.id : null;
+  if (annonse) fyllSkjema(annonse);
+  else fyllUtSelger();
+  skjemaOverskrift.textContent = annonse ? "Rediger annonse" : "Legg ut annonse";
+  sendKnapp.textContent = annonse ? "Lagre endringer" : "Legg ut annonse";
   fjernAlleFeil();
   isbnHjelp.textContent = ISBN_HJELPETEKST;
   dialog.showModal();
@@ -22,7 +34,25 @@ function lukkSkjema() {
   dialog.close();
 }
 
-document.getElementById("legg-ut-knapp").addEventListener("click", apneSkjema);
+// Fyller ut skjemaet med en annonse som skal redigeres
+function fyllSkjema(a) {
+  const felt = skjema.elements;
+  for (const navn of ["isbn", "tittel", "forfatter", "utgave", "emnekode", "larested", "tilstand", "by", "beskrivelse", "selger"]) {
+    felt[navn].value = a[navn] ?? "";
+  }
+  felt.pris.value = String(a.pris ?? "").replace(".", ",");
+  felt.kanSendes.checked = Boolean(a.kanSendes);
+}
+
+// Navn og by fra din forrige annonse, så du slipper å skrive dem på nytt (som en profil)
+function fyllUtSelger() {
+  const forrige = sorterTreff(annonser.filter(erMin), "nyeste")[0];
+  if (!forrige) return;
+  if (!skjema.elements.selger.value) skjema.elements.selger.value = forrige.selger ?? "";
+  if (!skjema.elements.by.value) skjema.elements.by.value = forrige.by ?? "";
+}
+
+document.getElementById("legg-ut-knapp").addEventListener("click", () => apneSkjema());
 document.getElementById("lukk-knapp").addEventListener("click", lukkSkjema);
 document.getElementById("avbryt-knapp").addEventListener("click", lukkSkjema);
 // Kjøres uansett hvordan skjemaet lukkes (også med Esc-tasten)
@@ -172,9 +202,15 @@ skjema.addEventListener("submit", async e => {
     return;
   }
 
+  if (redigererId) {
+    await lagreEndringer();
+    return;
+  }
+
   const nyAnnonse = {
     id: nyId(),
     ...lesSkjema(),
+    eier: bruker.id,
     dato: dagensDato(),
     opprettet: Date.now(),
     status: "Til salgs"
@@ -203,3 +239,28 @@ skjema.addEventListener("submit", async e => {
     visMelding("Annonsen er lagt ut, men kunne ikke lagres i nettleseren. Den forsvinner hvis du laster inn siden på nytt.", 6000);
   }
 });
+
+// ========== SKJEMA: LAGRE ENDRINGER ==========
+async function lagreEndringer() {
+  const a = annonser.find(x => x.id === redigererId);
+  redigererId = null;
+  if (!a || !erMin(a)) {
+    lukkSkjema();
+    return;
+  }
+  const endringer = { ...lesSkjema(), endret: Date.now() };
+  Object.assign(a, endringer);
+  skjema.reset();
+  lukkSkjema();
+  byggValg(); // byen eller lærestedet kan være endret
+  tegnPaNytt();
+
+  // «Rediger»-knappen ble tegnet på nytt – sett fokus på den nye
+  const rediger = annonseIdFraAdresse()
+    ? detaljInnhold.querySelector('[data-handling="rediger"]')
+    : mineAnnonserListe.querySelector(`[data-id="${CSS.escape(a.id)}"] [data-handling="rediger"]`);
+  if (rediger) rediger.focus();
+
+  const lagret = await Data.oppdaterAnnonse(a.id, endringer);
+  visMelding(lagret ? "Endringene er lagret." : "Endringene ble gjort, men kunne ikke lagres i nettleseren.");
+}

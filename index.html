@@ -13,6 +13,7 @@
 <script src="js/visninger.js" defer></script>
 <script src="js/sok.js" defer></script>
 <script src="js/skjema.js" defer></script>
+<script src="js/minside.js" defer></script>
 <script src="js/app.js" defer></script>
 </head>
 <body>
@@ -35,21 +36,34 @@
         autocomplete="off"
         enterkeyhint="search">
     </div>
-    <div class="topp-handlinger">
-      <a href="#favoritter" class="favoritt-lenke" id="favoritt-lenke">
+    <!-- Hovedmenyen ligger i toppfeltet på store skjermer og nederst på mobil (som i Finn-appen) -->
+    <nav class="hovedmeny" aria-label="Hovedmeny">
+      <a href="#" class="menylenke meny-forside" id="forside-lenke">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"></circle><line x1="16.5" y1="16.5" x2="21" y2="21"></line>
+        </svg>
+        <span class="menytekst">Annonser</span>
+      </a>
+      <a href="#favoritter" class="menylenke favoritt-lenke" id="favoritt-lenke">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M12 20.5s-7.5-4.6-9.5-9.3C1.2 8 3 4.5 6.6 4.5c2.1 0 3.6 1.2 5.4 3.2 1.8-2 3.3-3.2 5.4-3.2 3.6 0 5.4 3.5 4.1 6.7-2 4.7-9.5 9.3-9.5 9.3z"/>
         </svg>
-        <span class="favoritt-tekst">Mine favoritter</span>
+        <span class="menytekst">Favoritter</span>
         <span class="favoritt-antall" id="favoritt-antall" hidden></span>
+      </a>
+      <a href="#min-side" class="menylenke meny-minside" id="min-side-lenke">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"></path>
+        </svg>
+        <span class="menytekst">Min side</span>
       </a>
       <button type="button" class="legg-ut-knapp" id="legg-ut-knapp">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true">
           <line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
-        <span>Legg ut<span class="ekstra-tekst"> annonse</span></span>
+        <span class="menytekst">Legg ut<span class="ekstra-tekst"> annonse</span></span>
       </button>
-    </div>
+    </nav>
   </div>
 </header>
 
@@ -187,6 +201,21 @@
     </button>
     <div id="detalj-innhold"></div>
   </section>
+
+  <!-- ========== MIN SIDE ========== -->
+  <section id="minside-visning" hidden aria-labelledby="min-side-overskrift">
+    <div class="sidetittel-rad">
+      <h1 class="sidetittel" id="min-side-overskrift" tabindex="-1">Min side</h1>
+    </div>
+
+    <section class="min-side-del" aria-labelledby="mine-annonser-overskrift">
+      <div class="min-side-del-topp">
+        <h2 id="mine-annonser-overskrift">Mine annonser</h2>
+        <span class="min-side-antall" id="mine-annonser-antall"></span>
+      </div>
+      <div id="mine-annonser"></div>
+    </section>
+  </section>
 </main>
 
 <footer class="bunn">
@@ -311,7 +340,19 @@
 
     <div class="skjema-knapper">
       <button type="button" class="knapp knapp-sekundar" id="avbryt-knapp">Avbryt</button>
-      <button type="submit" class="knapp knapp-primar">Legg ut annonse</button>
+      <button type="submit" class="knapp knapp-primar" id="send-knapp">Legg ut annonse</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ========== BEKREFTELSE (f.eks. før sletting) ========== -->
+<dialog class="bekreft-dialog" id="bekreft-dialog" aria-labelledby="bekreft-tittel" aria-describedby="bekreft-tekst">
+  <form method="dialog">
+    <h2 id="bekreft-tittel"></h2>
+    <p id="bekreft-tekst"></p>
+    <div class="skjema-knapper">
+      <button type="submit" class="knapp knapp-sekundar" value="nei">Avbryt</button>
+      <button type="submit" class="knapp knapp-fare" value="ja" id="bekreft-ja"></button>
     </div>
   </form>
 </dialog>

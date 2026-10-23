@@ -130,15 +130,14 @@ body.modal-apen { overflow: hidden; }
 .legg-ut-knapp:focus-visible { outline: 3px solid var(--bakgrunn); outline-offset: 2px; }
 .legg-ut-knapp svg { width: 16px; height: 16px; }
 
-/* Knappene til høyre i toppfeltet */
-.topp-handlinger {
+/* ========== HOVEDMENY (i toppfeltet, nederst på mobil) ========== */
+.hovedmeny {
   display: flex;
   align-items: center;
   gap: 10px;
 }
-
-/* «Mine favoritter»-lenken i toppfeltet */
-.favoritt-lenke {
+.menylenke {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -150,12 +149,16 @@ body.modal-apen { overflow: hidden; }
   font-size: 0.98rem;
   white-space: nowrap;
 }
-.favoritt-lenke:hover { background: rgba(255, 255, 255, 0.1); }
-.favoritt-lenke[aria-current="page"] { background: rgba(255, 255, 255, 0.16); }
-.favoritt-lenke:focus-visible { outline: 3px solid var(--messing); outline-offset: 2px; }
-.favoritt-lenke svg { width: 20px; height: 20px; }
+.menylenke:hover { background: rgba(255, 255, 255, 0.1); }
+.menylenke[aria-current="page"] { background: rgba(255, 255, 255, 0.16); }
+.menylenke:focus-visible { outline: 3px solid var(--messing); outline-offset: 2px; }
+.menylenke svg { width: 20px; height: 20px; flex-shrink: 0; }
 .favoritt-lenke svg path { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
 .favoritt-lenke[aria-current="page"] svg path { fill: currentColor; }
+.meny-minside[aria-current="page"] svg circle,
+.meny-minside[aria-current="page"] svg path { fill: currentColor; }
+/* På store skjermer er logoen veien til forsiden */
+.meny-forside { display: none; }
 .favoritt-antall {
   min-width: 20px;
   height: 20px;
@@ -897,9 +900,108 @@ main {
   font-size: 1.15rem;
   margin-bottom: 10px;
 }
+.statusvalg-tittel { font-weight: 600; font-size: 0.93rem; margin-bottom: 6px; }
+.selger-handlinger {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+/* ========== MIN SIDE ========== */
+.min-side-del { margin-top: 4px; }
+.min-side-del + .min-side-del { margin-top: 40px; }
+.min-side-del-topp {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.min-side-del-topp h2 {
+  font-family: var(--serif);
+  font-size: 1.25rem;
+  color: var(--gronn-mork);
+}
+.min-side-antall { color: var(--tekst-dempet); font-size: 0.95rem; }
+.mine-annonser { list-style: none; display: grid; gap: 12px; }
+.min-rad {
+  display: flex;
+  gap: 16px;
+  padding: 14px;
+  background: var(--kort);
+  border: 1px solid var(--kant);
+  border-radius: 12px;
+}
+.min-omslag {
+  flex-shrink: 0;
+  width: 72px;
+  height: 96px;
+  border-radius: 4px 8px 8px 4px;
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  color: #FBF7EF;
+  font-family: var(--serif);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.min-rad.er-solgt .min-omslag { filter: grayscale(0.85); opacity: 0.6; }
+.min-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.min-tittel {
+  font-family: var(--serif);
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: var(--gronn-mork);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.min-tittel:hover { text-decoration: underline; }
+.min-tittel:focus-visible { outline: 3px solid var(--messing); outline-offset: 2px; border-radius: 4px; }
+.min-detaljer { font-size: 0.88rem; color: var(--tekst-dempet); }
+.min-handlinger {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  margin-top: auto;
+  padding-top: 6px;
+}
+.min-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--tekst-dempet);
+}
+.min-status .velger { width: auto; padding: 6px 10px; }
+.min-handlinger .lenkeknapp { padding: 4px 2px; }
+
+/* ========== BEKREFTELSESDIALOG (f.eks. før sletting) ========== */
+dialog.bekreft-dialog {
+  border: none;
+  margin: auto;
+  width: min(420px, calc(100% - 32px));
+  padding: 24px;
+  border-radius: 16px;
+  background: var(--bakgrunn);
+  color: var(--tekst);
+  box-shadow: 0 20px 60px rgba(19, 51, 38, 0.35);
+}
+dialog.bekreft-dialog::backdrop { background: rgba(19, 51, 38, 0.55); }
+.bekreft-dialog h2 {
+  font-family: var(--serif);
+  font-size: 1.3rem;
+  color: var(--gronn-mork);
+  margin-bottom: 8px;
+}
+.bekreft-dialog p { color: var(--tekst-dempet); overflow-wrap: anywhere; }
+.bekreft-dialog .skjema-knapper { margin-top: 20px; }
 
 /* ========== SUBTILE HOVER-EFFEKTER ========== */
-.knapp, .legg-ut-knapp, .filtrer-knapp, .favoritt-knapp, .favoritt-lenke,
+.knapp, .legg-ut-knapp, .filtrer-knapp, .favoritt-knapp, .menylenke,
 .tilbake-knapp, .lukk-knapp, .lenkeknapp, .statusvalg button, .hjerte, .brikke,
 .velger, .liten-input, .sok input, .felt input, .felt select, .felt textarea {
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease,
@@ -944,6 +1046,10 @@ main {
 .knapp-primar:hover { background: var(--gronn-mork); border-color: var(--gronn-mork); }
 .knapp-sekundar { background: transparent; color: var(--gronn); }
 .knapp-sekundar:hover { background: var(--gronn-lys); }
+/* Handlinger som ikke kan angres, f.eks. å slette */
+.knapp-fare { background: var(--feil); border-color: var(--feil); color: #fff; }
+.knapp-fare:hover { background: #8E2F22; border-color: #8E2F22; }
+.lenkeknapp.fare { color: var(--feil); }
 
 /* ========== SKJEMA FOR NY ANNONSE (dialogvindu) ========== */
 dialog.skjema-dialog {
@@ -1099,7 +1205,7 @@ dialog.skjema-dialog::backdrop {
 }
 
 /* ========== SMALERE SKJERMER: SØKEFELTET FÅR EGEN RAD ========== */
-@media (max-width: 900px) {
+@media (max-width: 1000px) {
   .topp-innhold {
     flex-wrap: wrap;
     justify-content: space-between;
@@ -1176,8 +1282,55 @@ dialog.skjema-dialog::backdrop {
 /* ========== MOBILTILPASNING ========== */
 @media (max-width: 640px) {
   .logo { font-size: 1.4rem; }
-  .legg-ut-knapp { padding: 8px 14px; font-size: 0.92rem; }
   main { padding: 20px 14px 40px; }
+
+  /* Menyen blir en fast linje nederst på skjermen, som i Finn-appen */
+  body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
+  .hovedmeny {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+    background: var(--gronn);
+    box-shadow: 0 -2px 0 var(--gronn-mork);
+  }
+  .menylenke,
+  .hovedmeny .legg-ut-knapp {
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    min-height: 54px;
+    padding: 6px 2px;
+    border-radius: 12px;
+    font-size: 0.74rem;
+  }
+  .hovedmeny .legg-ut-knapp { border: none; }
+  .hovedmeny .legg-ut-knapp svg { width: 20px; height: 20px; }
+  .meny-forside { display: inline-flex; }
+  .ekstra-tekst {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .favoritt-antall {
+    position: absolute;
+    top: 4px;
+    left: calc(50% + 6px);
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    font-size: 0.7rem;
+  }
+  .melding { bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
   .sidetittel { font-size: 1.25rem; }
   .sidetittel-rad { margin-bottom: 14px; }
   .hjerte { top: 6px; right: 6px; width: 32px; height: 32px; }
@@ -1200,6 +1353,9 @@ dialog.skjema-dialog::backdrop {
   .tilbake-knapp { margin-bottom: 12px; margin-left: -6px; }
   .bunn-innhold { flex-direction: column; align-items: flex-start; padding-left: 16px; padding-right: 16px; }
   .selgerboks { padding: 14px; }
+  .min-rad { gap: 12px; padding: 12px; }
+  .min-status { flex-basis: 100%; } /* Rediger og Slett samlet på linjen under */
+  .min-omslag { width: 56px; height: 76px; font-size: 0.68rem; }
   .detalj .omslag { height: 170px; max-width: none; }
   .detalj .omslag-kode { font-size: 1.6rem; }
   .detalj-tittel { font-size: 1.5rem; }
@@ -1222,22 +1378,10 @@ dialog.skjema-dialog::backdrop {
   .skjema-knapper { flex-direction: column-reverse; }
   .skjema-knapper .knapp { width: 100%; }
 }
-/* Små telefoner: bare hjerteikon for favoritter, kortere knappetekst */
-@media (max-width: 520px) {
-  .topp-handlinger { gap: 6px; }
-  .favoritt-lenke { padding: 8px 10px; }
-  .favoritt-tekst {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-}
-@media (max-width: 400px) {
-  .ekstra-tekst {
+/* Nettbrett: bare ikon for favoritter og Min side, så menyen får plass ved siden av logoen */
+@media (min-width: 641px) and (max-width: 760px) {
+  .menylenke { padding: 9px 11px; }
+  .menylenke .menytekst {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -1251,8 +1395,5 @@ dialog.skjema-dialog::backdrop {
 @media (max-width: 360px) {
   .topp-innhold { gap: 10px 8px; padding-left: 12px; padding-right: 12px; }
   .logo { font-size: 1.25rem; gap: 8px; }
-  .topp-handlinger { gap: 2px; }
-  .favoritt-lenke { padding: 8px; }
-  .legg-ut-knapp { padding: 7px 11px; gap: 6px; }
   .sortering label { display: none; }
 }

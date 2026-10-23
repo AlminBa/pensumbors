@@ -9,6 +9,25 @@
 const Data = (() => {
   const ANNONSENOKKEL = "pensumbors_annonser_v1";
   const FAVORITTNOKKEL = "pensumbors_favoritter_v1";
+  const BRUKERNOKKEL = "pensumbors_bruker_v1";
+
+  let brukerId = null;
+
+  // Uten innlogging er «brukeren» denne nettleseren: en tilfeldig ID som huskes.
+  // Med en ekte server blir dette ID-en til den som er logget inn.
+  function minBrukerId() {
+    if (brukerId) return brukerId;
+    try {
+      brukerId = localStorage.getItem(BRUKERNOKKEL);
+    } catch {
+      // nettleseren tillater ikke lagring – da får brukeren en ny ID hver gang
+    }
+    if (!brukerId) {
+      brukerId = "b" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+      try { localStorage.setItem(BRUKERNOKKEL, brukerId); } catch { /* se over */ }
+    }
+    return brukerId;
+  }
 
   function les(nokkel) {
     try {
@@ -38,12 +57,15 @@ const Data = (() => {
     return kopi;
   }
 
-  // Eksempelannonser som ble lagret av en eldre versjon, får feltene som har kommet til
-  // siden (lærested, «kan sendes» osv.). Det som er endret, f.eks. status, beholdes.
+  // Data lagret av en eldre versjon gjøres oppdatert:
+  //  - eksempelannonsene får feltene som har kommet til siden (lærested, «kan sendes» osv.),
+  //    mens det brukeren har endret, f.eks. status, beholdes
+  //  - annonser lagt ut i denne nettleseren før annonser fikk en eier, blir brukerens egne
   function oppgrader(liste) {
     for (const annonse of liste) {
       const eksempel = EKSEMPELANNONSER.find(e => e.id === annonse.id);
       if (eksempel) for (const felt in eksempel) if (!(felt in annonse)) annonse[felt] = eksempel[felt];
+      if (annonse.opprettet && !annonse.eier) annonse.eier = minBrukerId();
     }
     return liste;
   }
@@ -94,6 +116,15 @@ const Data = (() => {
       if (!annonse) return false;
       Object.assign(annonse, endringer);
       return skriv(ANNONSENOKKEL, liste);
+    },
+
+    async slettAnnonse(id) {
+      return skriv(ANNONSENOKKEL, lesAnnonser().filter(a => a.id !== id));
+    },
+
+    // Den som bruker appen. Annonser med samme «eier» er brukerens egne.
+    async hentBruker() {
+      return { id: minBrukerId() };
     },
 
     async hentFavoritter() {

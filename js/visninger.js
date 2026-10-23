@@ -11,6 +11,8 @@ const sidetittel = document.getElementById("sidetittel");
 const visAlleLenke = document.getElementById("vis-alle-lenke");
 const favorittLenke = document.getElementById("favoritt-lenke");
 const favorittAntall = document.getElementById("favoritt-antall");
+const forsideLenke = document.getElementById("forside-lenke");
+const minSideLenke = document.getElementById("min-side-lenke");
 
 // ========== LISTEVISNING ==========
 function lenkeTil(a) {
@@ -138,6 +140,7 @@ function tegnDetalj(id) {
   const emne = encodeURIComponent(`Pensumbørs: ${a.tittel}`);
   const beskrivelse = String(a.beskrivelse ?? "").trim();
   const erFavoritt = favoritter.has(a.id);
+  const min = erMin(a);
   document.title = `${a.tittel} – Pensumbørs`;
 
   detaljInnhold.innerHTML = `
@@ -176,6 +179,21 @@ function tegnDetalj(id) {
             : `<p class="detalj-beskrivelse tom">Selgeren har ikke skrevet noen beskrivelse.</p>`}
         </div>
 
+        ${min ? `
+        <div class="selgerboks">
+          <h2>Din annonse</h2>
+          <p class="statusvalg-tittel" id="status-overskrift">Status</p>
+          <div class="statusvalg" role="group" aria-labelledby="status-overskrift">
+            ${STATUSER.map(s =>
+              `<button type="button" data-status="${s}" aria-pressed="${s === status}">${s}</button>`
+            ).join("")}
+          </div>
+          <p class="statushjelp">Solgte bøker vises blekere og havner nederst i listen.</p>
+          <div class="selger-handlinger">
+            <button type="button" class="knapp knapp-sekundar" data-handling="rediger">Rediger annonsen</button>
+            <button type="button" class="knapp knapp-fare" data-handling="slett">Slett annonsen</button>
+          </div>
+        </div>` : `
         <div class="detalj-seksjon kontakt">
           <button type="button" class="knapp knapp-primar" id="kontakt-knapp"
                   aria-expanded="false" aria-controls="kontakt-boks">Kontakt selger</button>
@@ -184,22 +202,12 @@ function tegnDetalj(id) {
             <a href="mailto:${epost}?subject=${emne}">${epost}</a>
             <p class="liten">Adressen er oppdiktet, fordi Pensumbørs er et studentprosjekt.</p>
           </div>
-        </div>
-
-        <div class="selgerboks">
-          <h2 id="status-overskrift">Endre status</h2>
-          <div class="statusvalg" role="group" aria-labelledby="status-overskrift">
-            ${STATUSER.map(s =>
-              `<button type="button" data-status="${s}" aria-pressed="${s === status}">${s}</button>`
-            ).join("")}
-          </div>
-          <p class="statushjelp">Solgte bøker vises blekere og havner nederst i listen.</p>
-        </div>
+        </div>`}
       </div>
     </article>`;
 }
 
-// Klikk inne i detaljvisningen: kontaktknapp og statusknapper
+// Klikk inne i detaljvisningen: kontaktknapp, og status, redigering og sletting på dine egne annonser
 detaljInnhold.addEventListener("click", async e => {
   // «Kontakt selger» viser eller skjuler e-postadressen
   if (e.target.closest("#kontakt-knapp")) {
@@ -212,28 +220,26 @@ detaljInnhold.addEventListener("click", async e => {
     return;
   }
 
+  const artikkel = detaljInnhold.querySelector(".detalj");
+  const a = artikkel && annonser.find(x => x.id === artikkel.dataset.id);
+  if (!a || !erMin(a)) return;
+
+  const handling = e.target.closest("[data-handling]")?.dataset.handling;
+  if (handling === "rediger") return apneSkjema(a);
+  if (handling === "slett") return slettAnnonse(a);
+
   // Statusknappene
   const statusKnapp = e.target.closest("button[data-status]");
-  if (!statusKnapp) return;
-  const artikkel = detaljInnhold.querySelector(".detalj");
-  const a = annonser.find(x => x.id === artikkel.dataset.id);
+  if (!statusKnapp || statusFor(a) === statusKnapp.dataset.status) return;
   const nyStatus = statusKnapp.dataset.status;
-  if (!a || statusFor(a) === nyStatus) return;
 
-  a.status = nyStatus;
-
-  // Oppdater detaljvisningen uten å tegne alt på nytt
+  // Oppdater detaljvisningen uten å tegne alt på nytt (da blir fokus på knappen)
   document.getElementById("detalj-status").innerHTML = statusMerke(nyStatus);
   artikkel.classList.toggle("er-solgt", nyStatus === "Solgt");
   detaljInnhold.querySelectorAll("button[data-status]").forEach(b =>
     b.setAttribute("aria-pressed", String(b.dataset.status === nyStatus))
   );
-
-  visAnnonser(); // listen bak oppdateres også
-  const lagret = await Data.oppdaterAnnonse(a.id, { status: nyStatus });
-  visMelding(lagret
-    ? `Status endret til «${nyStatus}».`
-    : "Statusen ble endret, men kunne ikke lagres i nettleseren.");
+  await endreStatus(a, nyStatus);
 });
 
 // ========== FAVORITTKNAPPER (hjertene) ==========
@@ -266,4 +272,18 @@ function visMelding(tekst, varighet = 3200) {
   melding.classList.add("synlig");
   clearTimeout(meldingTimer);
   meldingTimer = setTimeout(() => melding.classList.remove("synlig"), varighet);
+}
+
+// ========== BEKREFTELSE ==========
+// Viser en dialog og gir true hvis brukeren trykker på bekreft-knappen.
+// «Avbryt» er først og får fokus, så Enter ikke sletter noe ved et uhell.
+const bekreftDialog = document.getElementById("bekreft-dialog");
+function bekreft(tittel, tekst, knappetekst) {
+  document.getElementById("bekreft-tittel").textContent = tittel;
+  document.getElementById("bekreft-tekst").textContent = tekst;
+  document.getElementById("bekreft-ja").textContent = knappetekst;
+  bekreftDialog.returnValue = "";
+  bekreftDialog.showModal();
+  return new Promise(svar => bekreftDialog.addEventListener("close",
+    () => svar(bekreftDialog.returnValue === "ja"), { once: true }));
 }
