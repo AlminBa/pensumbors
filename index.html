@@ -2435,6 +2435,24 @@
     }
   });
 
+  // ========== FLERE FANER ==========
+  // Hver fane har sin egen kopi av annonsene og favorittene. Når en annen fane lagrer,
+  // henter vi dataene på nytt – ellers ville neste lagring her skrevet over endringene derfra.
+  window.addEventListener("storage", e => {
+    if (e.key === LAGRINGSNOKKEL) {
+      annonser = hentAnnonser();
+      byggByvalg();
+    } else if (e.key === FAVORITTNOKKEL) {
+      favoritter = hentFavoritter();
+    } else {
+      return;
+    }
+    oppdaterFavorittTeller();
+    const id = annonseIdFraAdresse();
+    if (id) tegnDetalj(id);
+    else visAnnonser();
+  });
+
   // ========== START ==========
   byggByvalg();
   oppdaterFavorittTeller();
