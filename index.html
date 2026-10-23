@@ -1284,7 +1284,8 @@
           </div>
         </div>
 
-        <div class="filter-bunn">
+        <!-- aria-live: skjermlesere hører antall treff her, fordi resten av siden er inert mens panelet er åpent -->
+        <div class="filter-bunn" aria-live="polite">
           <button type="button" class="knapp knapp-primar" id="vis-resultater">Vis annonser</button>
         </div>
       </aside>
@@ -2268,17 +2269,29 @@
     return filterpanel.classList.contains("apen");
   }
 
+  // Gjør alt utenfor panelet «inert» (eller vanlig igjen). Da kan verken Tab-tasten
+  // eller skjermlesere havne på annonsene bak panelet mens det er åpent.
+  function settSidenBakInert(inert) {
+    for (let el = filterpanel; el !== document.body; el = el.parentElement) {
+      for (const annet of el.parentElement.children) {
+        if (annet !== el) annet.inert = inert;
+      }
+    }
+  }
+
   function apneFilter() {
     filterpanel.classList.add("apen");
     filterpanel.setAttribute("role", "dialog");
     filterpanel.setAttribute("aria-modal", "true");
     filtrerKnapp.setAttribute("aria-expanded", "true");
     document.body.classList.add("modal-apen");
+    settSidenBakInert(true);
     document.getElementById("filter-lukk").focus();
   }
 
   function lukkFilter(flyttFokus = true) {
     if (!filterErApent()) return;
+    settSidenBakInert(false); // må skje før fokus flyttes tilbake til Filtrer-knappen
     filterpanel.classList.remove("apen");
     filterpanel.removeAttribute("role");
     filterpanel.removeAttribute("aria-modal");
