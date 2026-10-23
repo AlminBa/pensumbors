@@ -255,6 +255,7 @@ main {
   padding: 14px 0 16px;
 }
 .filtergruppe fieldset { border: none; }
+.brytere { display: flex; flex-direction: column; gap: 14px; }
 .filtergruppe legend,
 .filtergruppe .gruppe-tittel {
   float: left;               /* gjør legend til en vanlig blokk */
@@ -609,6 +610,21 @@ main {
   display: block;
   overflow-wrap: anywhere;
 }
+/* «Kan sendes»-merke nederst på omslaget */
+.omslag-merke {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  z-index: 2;
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(255, 253, 248, 0.95);
+  color: var(--gronn-mork);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
 
 .kort-innhold {
   padding: 14px 16px 16px;
@@ -639,6 +655,17 @@ main {
   border-radius: 6px;
   max-width: 100%;
   overflow-wrap: anywhere;
+}
+.kort-emne {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+.kort-larested {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--tekst-dempet);
 }
 .kort-pris {
   font-size: 1.25rem;
@@ -1022,6 +1049,24 @@ dialog.skjema-dialog::backdrop {
   font-weight: 500;
 }
 .feilmelding:empty { display: none !important; }
+.felt-hjelp {
+  font-size: 0.85rem;
+  color: var(--tekst-dempet);
+}
+.isbn-rad {
+  display: flex;
+  gap: 8px;
+}
+.isbn-rad input { flex: 1; min-width: 0; }
+.isbn-rad .knapp { white-space: nowrap; padding: 9px 16px; }
+/* Avkrysningsboksen i skjemaet («Kan sendes») skal ikke se ut som et tekstfelt */
+.felt .avkrysning input {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  background: none;
+}
 
 .skjema-knapper {
   display: flex;
@@ -1146,6 +1191,7 @@ dialog.skjema-dialog::backdrop {
   .omslag-kode { font-size: 1.05rem; }
   .omslag-tittel { padding: 6px 8px; }
   .kort .status { top: 6px; left: 6px; font-size: 0.68rem; padding: 4px 7px; }
+  .omslag-merke { left: 6px; bottom: 6px; font-size: 0.66rem; padding: 4px 7px; }
   .kort-innhold { padding: 10px 12px 12px; }
   .kort-tittel { font-size: 0.95rem; }
   .kort-pris { font-size: 1.08rem; }

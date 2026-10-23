@@ -78,10 +78,15 @@
         </div>
 
         <div class="filter-innhold">
-          <div class="filtergruppe">
+          <div class="filtergruppe brytere">
             <label class="bryter">
               <span>Skjul solgte</span>
               <input type="checkbox" id="skjul-solgte" role="switch">
+              <span class="bryter-spor" aria-hidden="true"></span>
+            </label>
+            <label class="bryter">
+              <span>Kan sendes</span>
+              <input type="checkbox" id="kan-sendes" role="switch">
               <span class="bryter-spor" aria-hidden="true"></span>
             </label>
           </div>
@@ -112,6 +117,13 @@
                 <label class="avkrysning"><input type="checkbox" name="tilstand-filter" value="Brukt"> Brukt <span class="filter-antall"></span></label>
                 <label class="avkrysning"><input type="checkbox" name="tilstand-filter" value="Godt brukt"> Godt brukt <span class="filter-antall"></span></label>
               </div>
+            </fieldset>
+          </div>
+
+          <div class="filtergruppe" id="larested-gruppe">
+            <fieldset>
+              <legend>Lærested</legend>
+              <div id="larested-filter"></div>
             </fieldset>
           </div>
 
@@ -202,9 +214,20 @@
   </div>
 
   <form class="skjema" id="annonseskjema" novalidate>
-    <p class="skjema-intro">Alle felt må fylles ut, bortsett fra beskrivelsen.</p>
+    <p class="skjema-intro">Felt merket «valgfritt» kan stå tomme.</p>
 
     <div class="felter">
+      <div class="felt bred">
+        <label for="felt-isbn">ISBN <span class="valgfritt">(valgfritt)</span></label>
+        <div class="isbn-rad">
+          <input type="text" id="felt-isbn" name="isbn" maxlength="20" inputmode="numeric" autocomplete="off"
+                 placeholder="10 eller 13 siffer" aria-describedby="isbn-hjelp feil-isbn">
+          <button type="button" class="knapp knapp-sekundar" id="hent-bokinfo">Hent bokinfo</button>
+        </div>
+        <span class="felt-hjelp" id="isbn-hjelp" aria-live="polite">Står på baksiden av boka. Da kan vi fylle ut tittel og forfatter for deg.</span>
+        <span class="feilmelding" id="feil-isbn"></span>
+      </div>
+
       <div class="felt bred">
         <label for="felt-tittel">Boktittel</label>
         <input type="text" id="felt-tittel" name="tittel" maxlength="120" autocomplete="off"
@@ -220,11 +243,25 @@
       </div>
 
       <div class="felt">
+        <label for="felt-utgave">Utgave <span class="valgfritt">(valgfritt)</span></label>
+        <input type="text" id="felt-utgave" name="utgave" maxlength="40" autocomplete="off" placeholder="f.eks. 3. utgave">
+      </div>
+
+      <div class="felt">
         <label for="felt-emnekode">Emnekode</label>
         <input type="text" id="felt-emnekode" name="emnekode" maxlength="20" autocomplete="off"
                autocapitalize="characters" placeholder="f.eks. MAT1100"
                aria-describedby="feil-emnekode">
         <span class="feilmelding" id="feil-emnekode"></span>
+      </div>
+
+      <div class="felt">
+        <label for="felt-larested">Lærested</label>
+        <!-- valgene lages ut fra LARESTEDER i js/hjelpere.js -->
+        <select id="felt-larested" name="larested" aria-describedby="feil-larested">
+          <option value="">Velg lærested</option>
+        </select>
+        <span class="feilmelding" id="feil-larested"></span>
       </div>
 
       <div class="felt">
@@ -262,9 +299,13 @@
       </div>
 
       <div class="felt bred">
+        <label class="avkrysning"><input type="checkbox" id="felt-kan-sendes" name="kanSendes"> Jeg kan sende boka i posten</label>
+      </div>
+
+      <div class="felt bred">
         <label for="felt-beskrivelse">Beskrivelse <span class="valgfritt">(valgfritt)</span></label>
         <textarea id="felt-beskrivelse" name="beskrivelse" maxlength="1000"
-                  placeholder="Utgave, notater i boken, hvor dere kan møtes …"></textarea>
+                  placeholder="Notater i boka, hvor dere kan møtes …"></textarea>
       </div>
     </div>
 

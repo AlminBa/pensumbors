@@ -27,12 +27,16 @@ function lagKort(a) {
     <div class="kort-ramme">
     <a class="${klasser.join(" ")}" href="${lenkeTil(a)}">
       ${statusMerke(status)}
-      <div class="omslag" style="background:${omslagsfarge(a.emnekode)}" aria-hidden="true">
-        <div class="omslag-tittel"><span class="omslag-kode">${trygg(a.emnekode)}</span></div>
+      <div class="omslag" style="background:${omslagsfarge(a.emnekode)}">
+        <div class="omslag-tittel" aria-hidden="true"><span class="omslag-kode">${trygg(a.emnekode)}</span></div>
+        ${a.kanSendes ? '<span class="omslag-merke">Kan sendes</span>' : ""}
       </div>
       <div class="kort-innhold">
         <h3 class="kort-tittel">${trygg(a.tittel)}</h3>
-        <span class="kort-kode">${trygg(a.emnekode)}</span>
+        <div class="kort-emne">
+          <span class="kort-kode">${trygg(a.emnekode)}</span>
+          ${a.larested ? `<span class="kort-larested">${trygg(a.larested)}</span>` : ""}
+        </div>
         <div class="kort-pris">${formaterPris(a.pris)}</div>
         <div class="kort-detaljer">
           <span>${trygg(a.tilstand)}</span>
@@ -150,12 +154,16 @@ function tegnDetalj(id) {
           </button>
         </div>
         <h1 class="detalj-tittel detalj-tittel-fokus" tabindex="-1">${trygg(a.tittel)}</h1>
-        <p class="detalj-forfatter">av ${trygg(a.forfatter)}</p>
+        <p class="detalj-forfatter">av ${trygg(a.forfatter)}${a.utgave ? ` · ${trygg(a.utgave)}` : ""}</p>
         <div class="detalj-pris">${formaterPris(a.pris)}</div>
 
         <dl class="detalj-fakta">
           <div><dt>Emnekode</dt><dd>${trygg(a.emnekode)}</dd></div>
+          ${a.larested ? `<div><dt>Lærested</dt><dd>${trygg(larestedNavn(a.larested))}</dd></div>` : ""}
           <div><dt>Tilstand</dt><dd>${trygg(a.tilstand)}</dd></div>
+          ${a.utgave ? `<div><dt>Utgave</dt><dd>${trygg(a.utgave)}</dd></div>` : ""}
+          ${a.isbn ? `<div><dt>ISBN</dt><dd>${trygg(a.isbn)}</dd></div>` : ""}
+          <div><dt>Levering</dt><dd>${a.kanSendes ? "Kan sendes" : "Må hentes"}</dd></div>
           <div><dt>By</dt><dd>${trygg(a.by)}</dd></div>
           <div><dt>Selger</dt><dd>${trygg(a.selger)}</dd></div>
           <div><dt>Lagt ut</dt><dd>${trygg(formaterDato(a.dato))}</dd></div>

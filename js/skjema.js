@@ -3,12 +3,20 @@
 // ========== SKJEMA: ÅPNE OG LUKKE ==========
 const dialog = document.getElementById("skjema-dialog");
 const skjema = document.getElementById("annonseskjema");
+const isbnHjelp = document.getElementById("isbn-hjelp");
+const hentBokinfoKnapp = document.getElementById("hent-bokinfo");
+const ISBN_HJELPETEKST = isbnHjelp.textContent;
+
+// Lærestedene i nedtrekkslisten lages ut fra listen i js/hjelpere.js
+skjema.elements.larested.insertAdjacentHTML("beforeend", LARESTEDER.map(l =>
+  `<option value="${trygg(l.kort)}">${trygg(larestedNavn(l.kort))}</option>`).join(""));
 
 function apneSkjema() {
   fjernAlleFeil();
+  isbnHjelp.textContent = ISBN_HJELPETEKST;
   dialog.showModal();
   document.body.classList.add("modal-apen");
-  skjema.elements.tittel.focus();
+  skjema.elements.isbn.focus();
 }
 function lukkSkjema() {
   dialog.close();
@@ -39,8 +47,10 @@ function rensEmnekode(tekst) {
   return String(tekst).toUpperCase().replace(/\s+/g, "");
 }
 
-// Én regel per felt. Hver regel gir en feilmelding, eller tom tekst hvis alt er i orden.
+// Én regel per felt, i samme rekkefølge som i skjemaet. Hver regel gir en feilmelding,
+// eller tom tekst hvis alt er i orden.
 const REGLER = {
+  isbn:      v => !v || tolkIsbn(v) ? "" : "Sjekk ISBN-et. Det skal ha 10 eller 13 siffer.",
   tittel:    v => v ? "" : "Skriv inn tittelen på boken.",
   forfatter: v => v ? "" : "Skriv inn hvem som har skrevet boken.",
   emnekode:  v => {
@@ -48,6 +58,7 @@ const REGLER = {
     if (!/^[A-ZÆØÅ0-9-]+$/.test(rensEmnekode(v))) return "Emnekoden kan bare inneholde bokstaver, tall og bindestrek.";
     return "";
   },
+  larested:  v => v ? "" : "Velg hvilket lærested emnet hører til.",
   pris:      v => {
     if (!v) return "Skriv inn en pris.";
     const tall = tolkPris(v);
@@ -75,14 +86,74 @@ function fjernAlleFeil() {
   Object.keys(REGLER).forEach(navn => visFeil(navn, ""));
 }
 
-// Når et felt med feil blir rettet, forsvinner feilmeldingen med en gang
+// Sjekker et felt på nytt hvis det er merket med feil (feilmeldingen forsvinner når det er rettet)
+function sjekkPaNytt(navn) {
+  if (skjema.elements[navn].getAttribute("aria-invalid") === "true") visFeil(navn, REGLER[navn](verdi(navn)));
+}
+
 Object.keys(REGLER).forEach(navn => {
-  const felt = skjema.elements[navn];
-  const sjekk = () => {
-    if (felt.getAttribute("aria-invalid") === "true") visFeil(navn, REGLER[navn](verdi(navn)));
+  skjema.elements[navn].addEventListener("input", () => sjekkPaNytt(navn));
+  skjema.elements[navn].addEventListener("change", () => sjekkPaNytt(navn));
+});
+
+// Feltene i skjemaet, slik de lagres i annonsen
+function lesSkjema() {
+  return {
+    tittel: verdi("tittel"),
+    forfatter: verdi("forfatter"),
+    utgave: verdi("utgave"),
+    isbn: tolkIsbn(verdi("isbn")) ?? "",
+    emnekode: rensEmnekode(verdi("emnekode")),
+    larested: verdi("larested"),
+    pris: tolkPris(verdi("pris")),
+    tilstand: verdi("tilstand"),
+    by: verdi("by"),
+    kanSendes: skjema.elements.kanSendes.checked,
+    beskrivelse: verdi("beskrivelse"),
+    selger: verdi("selger")
   };
-  felt.addEventListener("input", sjekk);
-  felt.addEventListener("change", sjekk);
+}
+
+// ========== SKJEMA: HENT BOKINFO FRA ISBN ==========
+// Fyller ut tittel og forfatter fra en bokdatabase (se Data.finnBok i js/data.js)
+let henterBokinfo = false;
+
+async function hentBokinfo() {
+  if (henterBokinfo) return;
+  const isbn = tolkIsbn(verdi("isbn"));
+  if (!isbn) {
+    visFeil("isbn", verdi("isbn") ? REGLER.isbn(verdi("isbn")) : "Skriv inn ISBN-et først.");
+    skjema.elements.isbn.focus();
+    return;
+  }
+  visFeil("isbn", "");
+  henterBokinfo = true;
+  isbnHjelp.textContent = "Henter bokinfo …";
+  try {
+    const bok = await Data.finnBok(isbn);
+    if (bok) {
+      skjema.elements.tittel.value = bok.tittel;
+      if (bok.forfatter) skjema.elements.forfatter.value = bok.forfatter;
+      sjekkPaNytt("tittel");
+      sjekkPaNytt("forfatter");
+      isbnHjelp.textContent = `Fant «${bok.tittel}». Sjekk at tittel og forfatter stemmer.`;
+    } else {
+      isbnHjelp.textContent = "Fant ikke boka. Fyll inn tittel og forfatter selv.";
+    }
+  } catch {
+    isbnHjelp.textContent = "Fikk ikke kontakt med bokdatabasen. Fyll inn tittel og forfatter selv.";
+  } finally {
+    henterBokinfo = false;
+  }
+}
+
+hentBokinfoKnapp.addEventListener("click", hentBokinfo);
+// Enter i ISBN-feltet henter bokinfo i stedet for å sende skjemaet
+skjema.elements.isbn.addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    hentBokinfo();
+  }
 });
 
 // ========== SKJEMA: SENDE INN ==========
@@ -103,14 +174,7 @@ skjema.addEventListener("submit", async e => {
 
   const nyAnnonse = {
     id: nyId(),
-    tittel: verdi("tittel"),
-    forfatter: verdi("forfatter"),
-    emnekode: rensEmnekode(verdi("emnekode")),
-    pris: tolkPris(verdi("pris")),
-    tilstand: verdi("tilstand"),
-    by: verdi("by"),
-    beskrivelse: verdi("beskrivelse"),
-    selger: verdi("selger"),
+    ...lesSkjema(),
     dato: dagensDato(),
     opprettet: Date.now(),
     status: "Til salgs"
@@ -126,7 +190,7 @@ skjema.addEventListener("submit", async e => {
   nullstillSokOgFiltre();
   sorteringValg.value = "nyeste";
   visesAntall = SIDESTORRELSE;
-  byggByvalg(); // en ny by kan ha kommet til
+  byggValg(); // en ny by eller et nytt lærested kan ha kommet til
   sistLagtUtId = nyAnnonse.id;
   gaTilListe("alle", Boolean(annonseIdFraAdresse()));
   sistLagtUtId = null;

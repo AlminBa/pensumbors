@@ -178,7 +178,7 @@ document.querySelector(".logo").addEventListener("click", e => {
 Data.vedEndring(async hva => {
   if (hva === "annonser") {
     annonser = await Data.hentAnnonser();
-    byggByvalg();
+    byggValg();
   } else {
     favoritter = await Data.hentFavoritter();
   }

@@ -82,6 +82,55 @@ function statusMerke(status) {
 // ========== TILSTAND ==========
 const TILSTANDER = ["Som ny", "God", "Brukt", "Godt brukt"];
 
+// ========== LÆRESTEDER ==========
+// «kort» lagres i annonsen og vises på kortene og i filteret, «navn» vises i skjemaet og detaljene
+const LARESTEDER = [
+  { kort: "UiO", navn: "Universitetet i Oslo" },
+  { kort: "UiB", navn: "Universitetet i Bergen" },
+  { kort: "NTNU", navn: "NTNU" },
+  { kort: "UiT", navn: "UiT Norges arktiske universitet" },
+  { kort: "UiS", navn: "Universitetet i Stavanger" },
+  { kort: "UiA", navn: "Universitetet i Agder" },
+  { kort: "NMBU", navn: "NMBU" },
+  { kort: "OsloMet", navn: "OsloMet" },
+  { kort: "Nord", navn: "Nord universitet" },
+  { kort: "USN", navn: "Universitetet i Sørøst-Norge" },
+  { kort: "HVL", navn: "Høgskulen på Vestlandet" },
+  { kort: "INN", navn: "Høgskolen i Innlandet" },
+  { kort: "BI", navn: "Handelshøyskolen BI" },
+  { kort: "NHH", navn: "Norges Handelshøyskole" },
+  { kort: "Kristiania", navn: "Høyskolen Kristiania" },
+  { kort: "Annet", navn: "Annet lærested" }
+];
+
+// «UiO» → «Universitetet i Oslo (UiO)». Ukjente verdier vises som de er.
+function larestedNavn(kort) {
+  const larested = LARESTEDER.find(l => l.kort === kort);
+  if (!larested) return String(kort ?? "");
+  return larested.navn === kort || kort === "Annet" ? larested.navn : `${larested.navn} (${kort})`;
+}
+
+// ========== ISBN ==========
+// Kontrollsifferet til et ISBN-13, ut fra de tolv første sifrene
+function kontrollsiffer13(tolv) {
+  const sum = [...tolv].reduce((sum, siffer, i) => sum + Number(siffer) * (i % 2 ? 3 : 1), 0);
+  return String((10 - (sum % 10)) % 10);
+}
+
+// Gir ISBN-13 (bare siffer) for et gyldig ISBN-10 eller ISBN-13, ellers null. Bindestreker og
+// mellomrom er lov. ISBN-10 gjøres om til ISBN-13, så samme bok alltid får samme nummer.
+function tolkIsbn(tekst) {
+  const s = String(tekst ?? "").replace(/[\s-]/g, "").toUpperCase();
+  if (/^\d{13}$/.test(s)) return kontrollsiffer13(s.slice(0, 12)) === s[12] ? s : null;
+  if (/^\d{9}[\dX]$/.test(s)) {
+    const sum = [...s].reduce((sum, tegn, i) => sum + (tegn === "X" ? 10 : Number(tegn)) * (10 - i), 0);
+    if (sum % 11 !== 0) return null;
+    const tolv = "978" + s.slice(0, 9);
+    return tolv + kontrollsiffer13(tolv);
+  }
+  return null;
+}
+
 // ========== OPPDIKTET E-POSTADRESSE ==========
 // Lager en falsk, men realistisk adresse ut fra selgerens fornavn.
 // «.example» er et domene som er reservert for eksempler, så ingen ekte person får e-posten.

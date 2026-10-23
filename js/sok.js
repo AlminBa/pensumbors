@@ -7,6 +7,7 @@
 // ========== ELEMENTER I SØK OG FILTER ==========
 const sokefelt = document.getElementById("sokefelt");
 const skjulSolgte = document.getElementById("skjul-solgte");
+const kanSendesBryter = document.getElementById("kan-sendes");
 const prisMin = document.getElementById("pris-min");
 const prisMax = document.getElementById("pris-max");
 const prisfilterFeil = document.getElementById("prisfilter-feil");
@@ -16,6 +17,9 @@ const nullstillFiltreKnapp = document.getElementById("nullstill-filtre");
 const filterMerke = document.getElementById("filter-merke");
 const visResultaterKnapp = document.getElementById("vis-resultater");
 const tilstandBokser = () => document.querySelectorAll('input[name="tilstand-filter"]');
+const larestedBokser = () => document.querySelectorAll('input[name="larested-filter"]');
+const larestedFilter = document.getElementById("larested-filter");
+const larestedGruppe = document.getElementById("larested-gruppe");
 const filterpanel = document.getElementById("filterpanel");
 const aktiveFiltre = document.getElementById("aktive-filtre");
 const visFlere = document.getElementById("vis-flere");
@@ -50,6 +54,26 @@ function byggByvalg(valgt = byFilter.value) {
   byFilter.value = valgt;
 }
 
+// ========== LÆRESTEDENE I FILTERET ==========
+// Én avkrysningsboks per lærested som finnes i annonsene (pluss de som er valgt)
+function byggLarestedvalg(valgte = lesKriterier().larester) {
+  const larester = new Set(annonser.map(a => a.larested).filter(Boolean));
+  valgte.forEach(l => larester.add(l));
+  const sortert = [...larester].sort((a, b) => a.localeCompare(b, "nb"));
+  larestedFilter.innerHTML = sortert.map(l => `
+    <label class="avkrysning" title="${trygg(larestedNavn(l))}">
+      <input type="checkbox" name="larested-filter" value="${trygg(l)}"${valgte.includes(l) ? " checked" : ""}>
+      ${trygg(l)} <span class="filter-antall"></span>
+    </label>`).join("");
+  larestedGruppe.hidden = sortert.length === 0;
+}
+
+// Byer og lærested hentes fra annonsene, så valgene må lages på nytt når annonsene endres
+function byggValg(k = lesKriterier()) {
+  byggByvalg(k.by);
+  byggLarestedvalg(k.larester);
+}
+
 // ========== KRITERIER ==========
 // Tom tekst → null (ingen grense). Ugyldig tekst → NaN.
 function tolkFilterPris(tekst) {
@@ -65,8 +89,10 @@ function lesKriterier() {
     min: tolkFilterPris(prisMin.value),
     max: tolkFilterPris(prisMax.value),
     tilstander: [...tilstandBokser()].filter(b => b.checked).map(b => b.value),
+    larester: [...larestedBokser()].filter(b => b.checked).map(b => b.value),
     by: byFilter.value,
     skjulSolgte: skjulSolgte.checked,
+    kanSendes: kanSendesBryter.checked,
     sortering: sorteringValg.value
   };
 }
@@ -77,8 +103,9 @@ function settKriterier(k) {
   prisMin.value = Number.isFinite(k.min) ? k.min : "";
   prisMax.value = Number.isFinite(k.max) ? k.max : "";
   tilstandBokser().forEach(b => (b.checked = k.tilstander.includes(b.value)));
-  byggByvalg(k.by);
+  byggValg(k);
   skjulSolgte.checked = k.skjulSolgte;
+  kanSendesBryter.checked = k.kanSendes;
   sorteringValg.value = k.sortering;
 }
 
@@ -96,8 +123,10 @@ function kriterierFraAdresse(sokedel = location.search) {
     min: pris("fra"),
     max: pris("til"),
     tilstander: TILSTANDER.filter(t => tilstander.includes(t)),
+    larester: [...new Set(p.getAll("larested").map(l => l.trim()).filter(Boolean))],
     by: bynokkel(p.get("by")),
     skjulSolgte: p.get("skjul_solgte") === "1",
+    kanSendes: p.get("sendes") === "1",
     sortering: SORTERINGER.includes(sortering) ? sortering : "nyeste"
   };
 }
@@ -109,8 +138,10 @@ function sokedelFor(k) {
   if (Number.isFinite(k.min)) p.set("fra", k.min);
   if (Number.isFinite(k.max)) p.set("til", k.max);
   k.tilstander.forEach(t => p.append("tilstand", t));
+  [...k.larester].sort().forEach(l => p.append("larested", l));
   if (k.by) p.set("by", k.by);
   if (k.skjulSolgte) p.set("skjul_solgte", "1");
+  if (k.kanSendes) p.set("sendes", "1");
   if (k.sortering !== "nyeste") p.set("sorter", k.sortering);
   const tekst = p.toString();
   return tekst ? "?" + tekst : "";
@@ -139,27 +170,32 @@ function sjekkPrisfilter(f) {
   prisfilterFeil.textContent = tekst;
 }
 
-// Teller hvor mange filtre som er i bruk (skjul solgte, pris, tilstand, by)
+// Teller hvor mange filtre som er i bruk (skjul solgte, kan sendes, pris, tilstand, lærested, by)
 function antallAktiveFiltre(f) {
   let antall = 0;
   if (f.skjulSolgte) antall++;
+  if (f.kanSendes) antall++;
   if (Number.isFinite(f.min) || Number.isFinite(f.max)) antall++;
   if (f.tilstander.length) antall++;
+  if (f.larester.length) antall++;
   if (f.by) antall++;
   return antall;
 }
 
 // Er noe skrevet eller valgt i filtrene (også ugyldig tekst)?
 function harFilterInnhold() {
-  return skjulSolgte.checked || prisMin.value.trim() !== "" || prisMax.value.trim() !== "" ||
-    [...tilstandBokser()].some(b => b.checked) || byFilter.value !== "";
+  return skjulSolgte.checked || kanSendesBryter.checked || prisMin.value.trim() !== "" ||
+    prisMax.value.trim() !== "" || [...tilstandBokser(), ...larestedBokser()].some(b => b.checked) ||
+    byFilter.value !== "";
 }
 
 function nullstillFiltre() {
   skjulSolgte.checked = false;
+  kanSendesBryter.checked = false;
   prisMin.value = "";
   prisMax.value = "";
   tilstandBokser().forEach(b => (b.checked = false));
+  larestedBokser().forEach(b => (b.checked = false));
   byFilter.value = "";
 }
 
@@ -174,14 +210,17 @@ function ordI(tekst) {
   return String(tekst ?? "").toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
 }
 
-// Søket treffer emnekoden, også skrevet med mellomrom («mat 1100» finner MAT1100). Ellers må
-// hvert ord du skriver være starten på et ord i tittel, forfatter eller emnekode, så
-// «kalkulus lind» finner Kalkulus av Tom Lindstrøm.
+// Søket treffer et ISBN (med eller uten bindestreker) eller emnekoden, også skrevet med
+// mellomrom («mat 1100» finner MAT1100). Ellers må hvert ord du skriver være starten på et
+// ord i tittel, forfatter, emnekode eller lærested, så «kalkulus lind» finner Kalkulus av
+// Tom Lindstrøm, og «uio mat» finner matematikkbøker fra UiO.
 function treffPaSok(a, sok) {
   const sokeord = ordI(sok);
   if (sokeord.length === 0) return true;
+  const isbn = tolkIsbn(sok);
+  if (isbn) return a.isbn === isbn;
   if (String(a.emnekode).toLowerCase().includes(sokeord.join(""))) return true;
-  const ord = ordI([a.tittel, a.forfatter, a.emnekode].join(" "));
+  const ord = ordI([a.tittel, a.forfatter, a.emnekode, a.larested].join(" "));
   return sokeord.every(s => ord.some(o => o.startsWith(s)));
 }
 
@@ -190,10 +229,12 @@ function treffPaSok(a, sok) {
 function passer(a, k, unntak = "") {
   if (k.sok && !treffPaSok(a, k.sok)) return false;
   if (k.skjulSolgte && statusFor(a) === "Solgt") return false;
+  if (k.kanSendes && !a.kanSendes) return false;
   const pris = Number(a.pris);
   if (Number.isFinite(k.min) && pris < k.min) return false;
   if (Number.isFinite(k.max) && pris > k.max) return false;
   if (unntak !== "tilstand" && k.tilstander.length && !k.tilstander.includes(a.tilstand)) return false;
+  if (unntak !== "larested" && k.larester.length && !k.larester.includes(a.larested)) return false;
   if (unntak !== "by" && k.by && bynokkel(a.by) !== k.by) return false;
   return true;
 }
@@ -222,11 +263,12 @@ function oppdaterFiltertellere(grunnlag, k) {
     }
     return antall;
   };
-  const perTilstand = tell("tilstand", a => a.tilstand);
-  tilstandBokser().forEach(boks => {
+  const visAntall = (bokser, antall) => bokser.forEach(boks => {
     boks.closest("label").querySelector(".filter-antall").innerHTML =
-      `${perTilstand.get(boks.value) || 0}<span class="skjult-tekst"> annonser</span>`;
+      `${antall.get(boks.value) || 0}<span class="skjult-tekst"> annonser</span>`;
   });
+  visAntall(tilstandBokser(), tell("tilstand", a => a.tilstand));
+  visAntall(larestedBokser(), tell("larested", a => a.larested));
   const perBy = tell("by", a => bynokkel(a.by));
   for (const valg of byFilter.options) {
     if (valg.value) valg.textContent = `${valg.dataset.navn} (${perBy.get(valg.value) || 0})`;
@@ -238,6 +280,7 @@ function oppdaterFiltertellere(grunnlag, k) {
 function filterbrikker(k) {
   const brikker = [];
   if (k.skjulSolgte) brikker.push({ tekst: "Skjul solgte", fjern: "solgte" });
+  if (k.kanSendes) brikker.push({ tekst: "Kan sendes", fjern: "sendes" });
   if (Number.isFinite(k.min) && Number.isFinite(k.max)) {
     brikker.push({ tekst: `${k.min.toLocaleString("nb-NO")}–${formaterPris(k.max)}`, fjern: "pris" });
   } else if (Number.isFinite(k.min)) {
@@ -246,6 +289,7 @@ function filterbrikker(k) {
     brikker.push({ tekst: `Til ${formaterPris(k.max)}`, fjern: "pris" });
   }
   k.tilstander.forEach(t => brikker.push({ tekst: t, fjern: "tilstand:" + t }));
+  k.larester.forEach(l => brikker.push({ tekst: l, fjern: "larested:" + l }));
   if (k.by) brikker.push({ tekst: byFilter.selectedOptions[0]?.dataset.navn ?? storForbokstav(k.by), fjern: "by" });
   return brikker;
 }
@@ -266,13 +310,14 @@ aktiveFiltre.addEventListener("click", e => {
   if (!knapp) return;
   const hva = knapp.dataset.fjern;
   const plass = [...aktiveFiltre.querySelectorAll(".brikke")].indexOf(knapp);
+  const fjernAvkrysning = (bokser, verdi) => bokser.forEach(b => { if (b.value === verdi) b.checked = false; });
   if (hva === "alle") nullstillFiltre();
   else if (hva === "solgte") skjulSolgte.checked = false;
+  else if (hva === "sendes") kanSendesBryter.checked = false;
   else if (hva === "pris") { prisMin.value = ""; prisMax.value = ""; }
   else if (hva === "by") byFilter.value = "";
-  else if (hva.startsWith("tilstand:")) {
-    tilstandBokser().forEach(b => { if (b.value === hva.slice("tilstand:".length)) b.checked = false; });
-  }
+  else if (hva.startsWith("tilstand:")) fjernAvkrysning(tilstandBokser(), hva.slice("tilstand:".length));
+  else if (hva.startsWith("larested:")) fjernAvkrysning(larestedBokser(), hva.slice("larested:".length));
   nyttSok();
   // Fokus til brikken som nå står på samme plass, eller til overskriften hvis ingen er igjen
   const brikker = aktiveFiltre.querySelectorAll(".brikke");
