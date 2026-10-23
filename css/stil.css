@@ -824,7 +824,9 @@ main {
   gap: 12px;
   flex-wrap: wrap;
 }
-.favoritt-knapp {
+.detalj-knapper { display: flex; flex-wrap: wrap; gap: 8px; }
+.favoritt-knapp,
+.del-knapp {
   font: inherit;
   font-weight: 600;
   font-size: 0.93rem;
@@ -844,8 +846,24 @@ main {
   color: var(--hjerte);
   background: var(--feil-lys);
 }
-.favoritt-knapp:focus-visible { outline: 3px solid var(--messing); outline-offset: 2px; }
-.favoritt-knapp svg { width: 18px; height: 18px; }
+.favoritt-knapp:focus-visible,
+.del-knapp:focus-visible { outline: 3px solid var(--messing); outline-offset: 2px; }
+.favoritt-knapp svg,
+.del-knapp svg { width: 18px; height: 18px; }
+.del-knapp:hover { border-color: var(--gronn); }
+
+/* «Flere bøker for …» under annonsen */
+.lignende {
+  margin-top: 48px;
+  padding-top: 28px;
+  border-top: 1px solid var(--kant);
+}
+.lignende h2 {
+  font-family: var(--serif);
+  font-size: 1.3rem;
+  color: var(--gronn-mork);
+  margin-bottom: 16px;
+}
 .detalj-tittel {
   font-family: var(--serif);
   font-size: 2rem;
@@ -1104,7 +1122,7 @@ dialog.bekreft-dialog::backdrop { background: rgba(19, 51, 38, 0.55); }
 .bekreft-dialog .skjema-knapper { margin-top: 20px; }
 
 /* ========== SUBTILE HOVER-EFFEKTER ========== */
-.knapp, .legg-ut-knapp, .filtrer-knapp, .favoritt-knapp, .menylenke,
+.knapp, .legg-ut-knapp, .filtrer-knapp, .favoritt-knapp, .del-knapp, .menylenke,
 .tilbake-knapp, .lukk-knapp, .lenkeknapp, .statusvalg button, .hjerte, .brikke,
 .velger, .liten-input, .sok input, .felt input, .felt select, .felt textarea {
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease,

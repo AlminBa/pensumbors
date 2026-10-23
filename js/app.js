@@ -22,7 +22,7 @@ function antallFavoritter() {
 // Søk og filtre står foran, f.eks. ?q=mat1100&by=oslo#favoritter (se js/sok.js).
 // Da fungerer også nettleserens tilbakeknapp, og du kan dele lenker.
 let listemodus = "alle";    // «alle» eller «favoritter»
-let tilbakeTil = null;      // «liste» eller «min-side»: hvor brukeren kom fra til en annonse
+let tilbakeTil = null;      // «liste», «min-side» eller «annonse»: hvor brukeren kom fra til en annonse
 let listeScroll = 0;        // hvor langt ned i listen brukeren var
 let sistApnetId = null;
 
@@ -77,7 +77,8 @@ function visRiktigVisning() {
     visBare(detaljvisning);
     oppdaterMeny(null);
     document.getElementById("tilbake-tekst").textContent =
-      tilbakeTil === "min-side" ? "Tilbake til Min side"
+      tilbakeTil === "annonse" ? "Tilbake"
+      : tilbakeTil === "min-side" ? "Tilbake til Min side"
       : listemodus === "favoritter" ? "Tilbake til favorittene" : "Tilbake til annonsene";
     tegnDetalj(id);
     window.scrollTo(0, 0);
@@ -133,6 +134,8 @@ window.addEventListener("hashchange", () => {
       listeScroll = window.scrollY;
     } else if (!minsideVisning.hidden) {
       tilbakeTil = "min-side";
+    } else if (!detaljvisning.hidden) {
+      tilbakeTil = "annonse"; // fra «Flere bøker for …» under en annen annonse
     }
   }
   visRiktigVisning();

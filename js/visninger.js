@@ -160,6 +160,35 @@ function visAnnonser() {
 }
 
 // ========== DETALJVISNING ==========
+const delIkon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>';
+
+// Andre annonser for samme emne eller samme bok (ISBN), de som er til salgs først
+function lignendeAnnonser(a) {
+  return sorterTreff(annonser.filter(x => x.id !== a.id &&
+    (x.emnekode === a.emnekode || (a.isbn && x.isbn === a.isbn))), "nyeste").slice(0, 4);
+}
+
+// Deler lenken til annonsen: med telefonens delingsmeny der den finnes, ellers kopieres lenken
+async function delAnnonse(a) {
+  const lenke = new URL(location.href);
+  lenke.search = "";
+  lenke.hash = lenkeTil(a);
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: a.tittel, text: `${a.tittel} – ${formaterPris(a.pris)} på Pensumbørs`, url: lenke.href });
+      return;
+    } catch (feil) {
+      if (feil.name === "AbortError") return; // brukeren lukket delingsmenyen
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(lenke.href);
+    visMelding("Lenken til annonsen er kopiert.");
+  } catch {
+    visMelding("Kunne ikke kopiere lenken. Kopier adressen fra adresselinjen i stedet.", 5000);
+  }
+}
+
 // Bildegalleri: ett stort bilde, og miniatyrer for å bytte bilde når det er flere
 function lagGalleri(a) {
   const antall = a.bilder.length;
@@ -197,6 +226,7 @@ function tegnDetalj(id) {
   const beskrivelse = String(a.beskrivelse ?? "").trim();
   const erFavoritt = favoritter.has(a.id);
   const min = erMin(a);
+  const lignende = lignendeAnnonser(a);
   document.title = `${a.tittel} – Pensumbørs`;
 
   detaljInnhold.innerHTML = `
@@ -209,9 +239,12 @@ function tegnDetalj(id) {
       <div class="detalj-info">
         <div class="detalj-topprad">
           <span id="detalj-status">${statusMerke(status)}</span>
-          <button type="button" class="favoritt-knapp${erFavoritt ? " er-favoritt" : ""}" data-favoritt="${trygg(a.id)}">
-            ${hjerteIkon}<span class="favoritt-knapp-tekst">${erFavoritt ? "Lagret som favoritt" : "Lagre som favoritt"}</span>
-          </button>
+          <div class="detalj-knapper">
+            <button type="button" class="del-knapp" data-handling="del">${delIkon}Del</button>
+            <button type="button" class="favoritt-knapp${erFavoritt ? " er-favoritt" : ""}" data-favoritt="${trygg(a.id)}">
+              ${hjerteIkon}<span class="favoritt-knapp-tekst">${erFavoritt ? "Lagret som favoritt" : "Lagre som favoritt"}</span>
+            </button>
+          </div>
         </div>
         <h1 class="detalj-tittel detalj-tittel-fokus" tabindex="-1">${trygg(a.tittel)}</h1>
         <p class="detalj-forfatter">av ${trygg(a.forfatter)}${a.utgave ? ` · ${trygg(a.utgave)}` : ""}</p>
@@ -227,6 +260,7 @@ function tegnDetalj(id) {
           <div><dt>By</dt><dd>${trygg(a.by)}</dd></div>
           <div><dt>Selger</dt><dd>${trygg(a.selger)}</dd></div>
           <div><dt>Lagt ut</dt><dd>${trygg(formaterDato(a.dato))}</dd></div>
+          ${a.endret ? `<div><dt>Sist endret</dt><dd>${trygg(formaterDato(a.endret))}</dd></div>` : ""}
         </dl>
 
         <div class="detalj-seksjon">
@@ -261,7 +295,12 @@ function tegnDetalj(id) {
           </div>
         </div>`}
       </div>
-    </article>`;
+    </article>
+    ${lignende.length ? `
+    <section class="lignende" aria-labelledby="lignende-overskrift">
+      <h2 id="lignende-overskrift">Flere bøker for ${trygg(a.emnekode)}</h2>
+      <div class="rutenett">${lignende.map(lagKort).join("")}</div>
+    </section>` : ""}`;
   lastBilder(detaljInnhold);
 }
 
@@ -293,9 +332,10 @@ detaljInnhold.addEventListener("click", async e => {
 
   const artikkel = detaljInnhold.querySelector(".detalj");
   const a = artikkel && annonser.find(x => x.id === artikkel.dataset.id);
+  const handling = e.target.closest("[data-handling]")?.dataset.handling;
+  if (a && handling === "del") return delAnnonse(a);
   if (!a || !erMin(a)) return;
 
-  const handling = e.target.closest("[data-handling]")?.dataset.handling;
   if (handling === "rediger") return apneSkjema(a);
   if (handling === "slett") return slettAnnonse(a);
 
