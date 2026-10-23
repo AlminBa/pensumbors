@@ -30,8 +30,8 @@
       <input
         type="search"
         id="sokefelt"
-        placeholder="Søk på emnekode eller tittel"
-        aria-label="Søk på emnekode eller tittel"
+        placeholder="Emnekode, tittel eller forfatter"
+        aria-label="Søk på emnekode, tittel eller forfatter"
         autocomplete="off"
         enterkeyhint="search">
     </div>
@@ -107,10 +107,10 @@
             <fieldset>
               <legend>Tilstand</legend>
               <div>
-                <label class="avkrysning"><input type="checkbox" name="tilstand-filter" value="Som ny"> Som ny</label>
-                <label class="avkrysning"><input type="checkbox" name="tilstand-filter" value="God"> God</label>
-                <label class="avkrysning"><input type="checkbox" name="tilstand-filter" value="Brukt"> Brukt</label>
-                <label class="avkrysning"><input type="checkbox" name="tilstand-filter" value="Godt brukt"> Godt brukt</label>
+                <label class="avkrysning"><input type="checkbox" name="tilstand-filter" value="Som ny"> Som ny <span class="filter-antall"></span></label>
+                <label class="avkrysning"><input type="checkbox" name="tilstand-filter" value="God"> God <span class="filter-antall"></span></label>
+                <label class="avkrysning"><input type="checkbox" name="tilstand-filter" value="Brukt"> Brukt <span class="filter-antall"></span></label>
+                <label class="avkrysning"><input type="checkbox" name="tilstand-filter" value="Godt brukt"> Godt brukt <span class="filter-antall"></span></label>
               </div>
             </fieldset>
           </div>
@@ -130,7 +130,8 @@
       </aside>
 
       <!-- ========== ANNONSER ========== -->
-      <section aria-label="Annonser">
+      <section aria-labelledby="annonser-overskrift">
+        <h2 class="skjult-tekst" id="annonser-overskrift">Annonser</h2>
         <div class="verktoylinje">
           <button type="button" class="filtrer-knapp" id="filtrer-knapp"
                   aria-controls="filterpanel" aria-expanded="false">
@@ -151,7 +152,15 @@
           </div>
         </div>
 
+        <!-- Filtrene som er i bruk, som brikker du kan fjerne én og én (som på Finn) -->
+        <div class="aktive-filtre" id="aktive-filtre" role="group" aria-label="Aktive filtre" hidden></div>
+
         <div class="rutenett" id="rutenett"></div>
+
+        <div class="vis-flere" id="vis-flere" hidden>
+          <p class="vis-flere-tekst" id="vis-flere-tekst"></p>
+          <button type="button" class="knapp knapp-sekundar" id="vis-flere-knapp">Vis flere annonser</button>
+        </div>
       </section>
     </div>
   </div>

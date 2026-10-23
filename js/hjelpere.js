@@ -3,6 +3,7 @@
 // ========== IKONER ==========
 const hjerteIkon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.5-9.3C1.2 8 3 4.5 6.6 4.5c2.1 0 3.6 1.2 5.4 3.2 1.8-2 3.3-3.2 5.4-3.2 3.6 0 5.4 3.5 4.1 6.7-2 4.7-9.5 9.3-9.5 9.3z"/></svg>';
 const stedIkon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
+const kryssIkon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg>';
 
 // ========== HJELPEFUNKSJONER ==========
 // Gjør tekst trygg å vise i HTML, slik at det brukere skriver ikke kan ødelegge siden
@@ -47,6 +48,12 @@ function bynokkel(by) {
   return String(by ?? "").trim().toLocaleLowerCase("nb");
 }
 
+// «bodø» → «Bodø»
+function storForbokstav(tekst) {
+  const s = String(tekst ?? "");
+  return s.charAt(0).toLocaleUpperCase("nb") + s.slice(1);
+}
+
 // Gir et tall ut fra en tekst (samme tekst gir alltid samme tall)
 function tekstTilTall(tekst) {
   let sum = 0;
@@ -71,6 +78,9 @@ function statusFor(a) {
 function statusMerke(status) {
   return `<span class="status ${STATUSKLASSER[status]}">${trygg(status)}</span>`;
 }
+
+// ========== TILSTAND ==========
+const TILSTANDER = ["Som ny", "God", "Brukt", "Godt brukt"];
 
 // ========== OPPDIKTET E-POSTADRESSE ==========
 // Lager en falsk, men realistisk adresse ut fra selgerens fornavn.

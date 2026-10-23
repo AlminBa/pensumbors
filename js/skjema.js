@@ -123,12 +123,12 @@ skjema.addEventListener("submit", async e => {
 
   // Gå til alle annonser, tøm søk og filtre og sorter på nyeste, slik at den nye annonsen synes øverst
   listeScroll = 0;
-  gaTilListe("alle", Boolean(annonseIdFraAdresse()));
   nullstillSokOgFiltre();
   sorteringValg.value = "nyeste";
+  visesAntall = SIDESTORRELSE;
   byggByvalg(); // en ny by kan ha kommet til
   sistLagtUtId = nyAnnonse.id;
-  visAnnonser();
+  gaTilListe("alle", Boolean(annonseIdFraAdresse()));
   sistLagtUtId = null;
   window.scrollTo({ top: 0, behavior: "smooth" });
 

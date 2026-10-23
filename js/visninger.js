@@ -51,51 +51,26 @@ function antallTekstFor(n) {
 
 function visAnnonser() {
   // 1. Les søk og filtre
-  const sok = sokefelt.value.trim().toLowerCase();
-  const sokUtenMellomrom = sok.replace(/\s+/g, ""); // så «mat 1100» også finner MAT1100
-  const f = lesFiltre();
-  sjekkPrisfilter(f);
+  const k = lesKriterier();
+  sjekkPrisfilter(k);
 
-  // 2. Finn annonsene som passer med søk OG alle filtre
+  // 2. Finn annonsene som passer med søk OG alle filtre, og sorter dem
   const favorittmodus = listemodus === "favoritter";
-  const treff = annonser.filter(a => {
-    if (favorittmodus && !favoritter.has(a.id)) return false;
-    if (f.skjulSolgte && statusFor(a) === "Solgt") return false;
-    if (sok) {
-      const tittel = String(a.tittel).toLowerCase();
-      const kode = String(a.emnekode).toLowerCase();
-      if (!tittel.includes(sok) && !kode.includes(sokUtenMellomrom)) return false;
-    }
-    const pris = Number(a.pris);
-    if (Number.isFinite(f.min) && pris < f.min) return false;
-    if (Number.isFinite(f.max) && pris > f.max) return false;
-    if (f.tilstander.length && !f.tilstander.includes(a.tilstand)) return false;
-    if (f.by && bynokkel(a.by) !== f.by) return false;
-    return true;
-  });
+  const grunnlag = favorittmodus ? annonser.filter(a => favoritter.has(a.id)) : annonser;
+  const treff = sorterTreff(grunnlag.filter(a => passer(a, k)), k.sortering);
 
-  // 3. Sorter. Solgte annonser kommer alltid sist.
-  const sortering = sorteringValg.value;
-  treff.sort((x, y) => {
-    const xSolgt = statusFor(x) === "Solgt";
-    const ySolgt = statusFor(y) === "Solgt";
-    if (xSolgt !== ySolgt) return xSolgt ? 1 : -1;
-    // Nyeste først; ved samme dato vises den sist lagt ut øverst
-    const nyest = String(y.dato).localeCompare(String(x.dato)) || (y.opprettet || 0) - (x.opprettet || 0);
-    if (sortering === "billigste") return (Number(x.pris) - Number(y.pris)) || nyest;
-    if (sortering === "dyreste") return (Number(y.pris) - Number(x.pris)) || nyest;
-    return nyest;
-  });
-
-  // 4. Oppdater tellere og knapper
-  const aktive = antallAktiveFiltre(f);
+  // 3. Oppdater tellere, filterbrikker og knapper
+  const aktive = antallAktiveFiltre(k);
   antallTekst.textContent = antallTekstFor(treff.length);
   visResultaterKnapp.textContent = treff.length === 0 ? "Ingen annonser passer" : `Vis ${antallTekstFor(treff.length)}`;
   filterMerke.textContent = aktive;
   filterMerke.hidden = aktive === 0;
   nullstillFiltreKnapp.hidden = !harFilterInnhold();
+  oppdaterFiltertellere(grunnlag, k);
+  tegnFilterbrikker(k);
+  visFlere.hidden = true;
 
-  // 5. Tegn kortene, eller en melding hvis ingenting passer
+  // 4. Tegn kortene, eller en melding hvis ingenting passer
   if (favorittmodus && antallFavoritter() === 0) {
     rutenett.innerHTML = `
       <div class="tomt" style="grid-column: 1 / -1">
@@ -118,14 +93,14 @@ function visAnnonser() {
   if (treff.length === 0) {
     const filtreIBruk = harFilterInnhold();
     let tittel, tekst, knappetekst;
-    if (sok && !filtreIBruk) {
-      tittel = `Ingen treff på «${trygg(sokefelt.value.trim())}»`;
+    if (k.sok && !filtreIBruk) {
+      tittel = `Ingen treff på «${trygg(k.sok)}»`;
       tekst = "Sjekk stavemåten, eller prøv bare emnekoden, for eksempel MAT1100.";
       knappetekst = "Tøm søket";
     } else {
       tittel = "Ingen annonser passer";
       tekst = "Prøv et større prisområde, en annen by eller færre filtre.";
-      knappetekst = sok ? "Nullstill søk og filtre" : "Nullstill filtre";
+      knappetekst = k.sok ? "Nullstill søk og filtre" : "Nullstill filtre";
     }
     rutenett.innerHTML = `
       <div class="tomt" style="grid-column: 1 / -1">
@@ -136,7 +111,8 @@ function visAnnonser() {
     return;
   }
 
-  rutenett.innerHTML = treff.map(lagKort).join("");
+  rutenett.innerHTML = treff.slice(0, visesAntall).map(lagKort).join("");
+  tegnVisFlere(treff.length);
 }
 
 // ========== DETALJVISNING ==========

@@ -413,6 +413,48 @@ main {
   place-items: center;
 }
 
+/* ========== TELLERE I FILTRENE ========== */
+.filter-antall {
+  margin-left: auto;
+  font-size: 0.82rem;
+  color: var(--tekst-dempet);
+}
+
+/* ========== FILTERBRIKKER (aktive filtre) ========== */
+.aktive-filtre {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: -4px 0 16px;
+}
+.brikke {
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px 6px 13px;
+  border: 1.5px solid var(--gronn);
+  border-radius: 999px;
+  background: var(--gronn-lys);
+  color: var(--gronn-mork);
+  cursor: pointer;
+}
+.brikke svg { width: 13px; height: 13px; flex-shrink: 0; }
+.brikke:focus-visible { outline: 3px solid var(--messing); outline-offset: 2px; }
+
+/* ========== VIS FLERE ========== */
+.vis-flere {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 28px;
+}
+.vis-flere-tekst { color: var(--tekst-dempet); font-size: 0.92rem; }
+
 /* ========== STATUSMERKE ========== */
 .status {
   display: inline-block;
@@ -831,7 +873,7 @@ main {
 
 /* ========== SUBTILE HOVER-EFFEKTER ========== */
 .knapp, .legg-ut-knapp, .filtrer-knapp, .favoritt-knapp, .favoritt-lenke,
-.tilbake-knapp, .lukk-knapp, .lenkeknapp, .statusvalg button, .hjerte,
+.tilbake-knapp, .lukk-knapp, .lenkeknapp, .statusvalg button, .hjerte, .brikke,
 .velger, .liten-input, .sok input, .felt input, .felt select, .felt textarea {
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease,
               box-shadow 0.15s ease, transform 0.15s ease;
@@ -854,6 +896,7 @@ main {
   .felt input:hover, .felt select:hover, .felt textarea:hover { border-color: #CDBFA8; }
   .avkrysning:hover { color: var(--gronn); }
   .kontakt-boks a:hover { color: var(--gronn); }
+  .brikke:hover { background: #D2E1D5; }
 }
 @media (prefers-reduced-motion: reduce) {
   .kort-ramme, .kort, .hjerte, .knapp, .legg-ut-knapp { transition: none; }

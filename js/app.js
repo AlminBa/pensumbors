@@ -16,6 +16,7 @@ function antallFavoritter() {
 //   (ingenting)     → alle annonser
 //   #favoritter     → mine favoritter
 //   #annonse-a3     → detaljer for annonse a3
+// Søk og filtre står foran, f.eks. ?q=mat1100&by=oslo#favoritter (se js/sok.js).
 // Da fungerer også nettleserens tilbakeknapp, og du kan dele lenker.
 let listemodus = "alle";    // «alle» eller «favoritter»
 let kommerFraListe = false; // true hvis brukeren klikket seg inn fra en liste
@@ -33,7 +34,7 @@ function modusFraAdresse() {
 }
 
 function adresseFor(modus) {
-  return location.pathname + location.search + (modus === "favoritter" ? "#favoritter" : "");
+  return location.pathname + sokedelFor(lesKriterier()) + (modus === "favoritter" ? "#favoritter" : "");
 }
 
 function oppdaterListeoverskrift() {
@@ -155,7 +156,7 @@ document.addEventListener("click", async e => {
 rutenett.addEventListener("click", e => {
   if (e.target.closest("#tomt-nullstill")) {
     nullstillSokOgFiltre();
-    visAnnonser();
+    nyttSok();
   }
   if (e.target.closest("#tomt-alle")) gaTilListe("alle");
 });
@@ -165,6 +166,7 @@ document.querySelector(".logo").addEventListener("click", e => {
   e.preventDefault();
   sokefelt.value = "";
   listeScroll = 0;
+  visesAntall = SIDESTORRELSE;
   gaTilListe("alle");
   visAnnonser();
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -190,7 +192,7 @@ Data.vedEndring(async hva => {
 async function start() {
   annonser = await Data.hentAnnonser();
   favoritter = await Data.hentFavoritter();
-  byggByvalg();
+  settKriterier(kriterierFraAdresse()); // søk og filtre fra adressen (?q=…)
   oppdaterFavorittTeller();
   visRiktigVisning(); // viser riktig visning ut fra adressen (alle, favoritter eller én annonse)
 }
