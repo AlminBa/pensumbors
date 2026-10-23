@@ -14,6 +14,41 @@ const favorittAntall = document.getElementById("favoritt-antall");
 const forsideLenke = document.getElementById("forside-lenke");
 const minSideLenke = document.getElementById("min-side-lenke");
 
+// ========== BILDER ==========
+// Bildene ligger i datalaget og hentes etter at siden er tegnet. Et bilde vises med en
+// midlertidig adresse (object URL) som huskes, så det bare hentes én gang.
+const bildeUrler = new Map(); // bilde-ID → adresse, eller null hvis bildet ikke finnes
+
+async function bildeUrl(id) {
+  if (!bildeUrler.has(id)) {
+    const blob = await Data.hentBilde(id);
+    bildeUrler.set(id, blob ? URL.createObjectURL(blob) : null);
+  }
+  return bildeUrler.get(id);
+}
+
+function glemBilde(id) {
+  const url = bildeUrler.get(id);
+  if (url) URL.revokeObjectURL(url);
+  bildeUrler.delete(id);
+}
+
+// Fyller inn bildene i «beholder». Finnes ikke bildet, vises det genererte omslaget under.
+async function lastBilder(beholder) {
+  await Promise.all([...beholder.querySelectorAll("img[data-bilde]:not([src])")].map(async img => {
+    const url = await bildeUrl(img.dataset.bilde);
+    if (url) img.src = url;
+    else img.remove();
+  }));
+}
+
+// Det første bildet over det genererte omslaget (med en tom alt-tekst: tittelen står ved siden av)
+function forsidebilde(a) {
+  return a.bilder?.length
+    ? `<img class="omslag-bilde" data-bilde="${trygg(a.bilder[0])}" alt="" decoding="async">`
+    : "";
+}
+
 // ========== LISTEVISNING ==========
 function lenkeTil(a) {
   return "#annonse-" + encodeURIComponent(a.id);
@@ -29,8 +64,9 @@ function lagKort(a) {
     <div class="kort-ramme">
     <a class="${klasser.join(" ")}" href="${lenkeTil(a)}">
       ${statusMerke(status)}
-      <div class="omslag" style="background:${omslagsfarge(a.emnekode)}">
+      <div class="omslag${a.bilder?.length ? " har-bilde" : ""}" style="background:${omslagsfarge(a.emnekode)}">
         <div class="omslag-tittel" aria-hidden="true"><span class="omslag-kode">${trygg(a.emnekode)}</span></div>
+        ${forsidebilde(a)}
         ${a.kanSendes ? '<span class="omslag-merke">Kan sendes</span>' : ""}
       </div>
       <div class="kort-innhold">
@@ -118,10 +154,29 @@ function visAnnonser() {
   }
 
   rutenett.innerHTML = treff.slice(0, visesAntall).map(lagKort).join("");
+  lastBilder(rutenett);
   tegnVisFlere(treff.length);
 }
 
 // ========== DETALJVISNING ==========
+// Bildegalleri: ett stort bilde, og miniatyrer for å bytte bilde når det er flere
+function lagGalleri(a) {
+  const antall = a.bilder.length;
+  return `
+    <div class="galleri">
+      <div class="galleri-hoved">
+        <img class="galleri-bilde" data-bilde="${trygg(a.bilder[0])}" alt="${trygg(`Bilde 1 av ${antall} av «${a.tittel}»`)}">
+      </div>
+      ${antall > 1 ? `
+      <div class="galleri-miniatyrer" role="group" aria-label="Velg bilde">
+        ${a.bilder.map((id, i) => `
+          <button type="button" class="miniatyr" data-vis-bilde="${i}" aria-pressed="${i === 0}">
+            <img data-bilde="${trygg(id)}" alt="Vis bilde ${i + 1} av ${antall}">
+          </button>`).join("")}
+      </div>` : ""}
+    </div>`;
+}
+
 function tegnDetalj(id) {
   const a = annonser.find(x => x.id === id);
 
@@ -145,9 +200,10 @@ function tegnDetalj(id) {
 
   detaljInnhold.innerHTML = `
     <article class="detalj${status === "Solgt" ? " er-solgt" : ""}" data-id="${trygg(a.id)}">
+      ${a.bilder?.length ? lagGalleri(a) : `
       <div class="omslag" style="background:${omslagsfarge(a.emnekode)}" aria-hidden="true">
         <div class="omslag-tittel"><span class="omslag-kode">${trygg(a.emnekode)}</span></div>
-      </div>
+      </div>`}
 
       <div class="detalj-info">
         <div class="detalj-topprad">
@@ -205,10 +261,24 @@ function tegnDetalj(id) {
         </div>`}
       </div>
     </article>`;
+  lastBilder(detaljInnhold);
 }
 
 // Klikk inne i detaljvisningen: kontaktknapp, og status, redigering og sletting på dine egne annonser
 detaljInnhold.addEventListener("click", async e => {
+  // Miniatyrene i bildegalleriet bytter det store bildet
+  const miniatyr = e.target.closest("[data-vis-bilde]");
+  if (miniatyr) {
+    const nr = Number(miniatyr.dataset.visBilde);
+    const valgt = miniatyr.querySelector("img");
+    const hoved = detaljInnhold.querySelector(".galleri-bilde");
+    hoved.src = (await bildeUrl(valgt.dataset.bilde)) ?? "";
+    hoved.alt = hoved.alt.replace(/^Bilde \d+/, `Bilde ${nr + 1}`);
+    detaljInnhold.querySelectorAll("[data-vis-bilde]").forEach(b =>
+      b.setAttribute("aria-pressed", String(b === miniatyr)));
+    return;
+  }
+
   // «Kontakt selger» viser eller skjuler e-postadressen
   if (e.target.closest("#kontakt-knapp")) {
     const knapp = document.getElementById("kontakt-knapp");

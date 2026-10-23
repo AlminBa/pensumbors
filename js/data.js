@@ -70,6 +70,42 @@ const Data = (() => {
     return liste;
   }
 
+  // ========== BILDER (IndexedDB) ==========
+  // Bilder er for store for localStorage, så de ligger i nettleserens database (IndexedDB).
+  // Med en ekte server legges de i en fillagring (f.eks. Supabase Storage) i stedet.
+  let bildeDb = null;
+
+  function apneBildeDb() {
+    bildeDb ??= new Promise((ok, feil) => {
+      const foresporsel = indexedDB.open("pensumbors", 1);
+      foresporsel.onupgradeneeded = () => foresporsel.result.createObjectStore("bilder");
+      foresporsel.onsuccess = () => ok(foresporsel.result);
+      foresporsel.onerror = () => feil(foresporsel.error);
+    });
+    return bildeDb;
+  }
+
+  // Kjører «handling» på bildelageret og venter til endringen faktisk er lagret
+  async function iBildelageret(modus, handling) {
+    const db = await apneBildeDb();
+    return new Promise((ok, feil) => {
+      const transaksjon = db.transaction("bilder", modus);
+      const foresporsel = handling(transaksjon.objectStore("bilder"));
+      transaksjon.oncomplete = () => ok(foresporsel.result);
+      transaksjon.onerror = transaksjon.onabort = () => feil(transaksjon.error);
+    });
+  }
+
+  async function slettBilde(id) {
+    try {
+      await iBildelageret("readwrite", lager => lager.delete(id));
+      return true;
+    } catch (feil) {
+      console.warn("Kunne ikke slette bilde:", feil);
+      return false;
+    }
+  }
+
   // ["A", "B", "C"] → «A, B og C»
   function ogListe(navn) {
     return navn.length > 1 ? navn.slice(0, -1).join(", ") + " og " + navn[navn.length - 1] : (navn[0] ?? "");
@@ -118,9 +154,33 @@ const Data = (() => {
       return skriv(ANNONSENOKKEL, liste);
     },
 
+    // Sletter annonsen og bildene dens
     async slettAnnonse(id) {
-      return skriv(ANNONSENOKKEL, lesAnnonser().filter(a => a.id !== id));
+      const liste = lesAnnonser();
+      const annonse = liste.find(a => a.id === id);
+      const lagret = skriv(ANNONSENOKKEL, liste.filter(a => a.id !== id));
+      for (const bildeId of annonse?.bilder ?? []) await slettBilde(bildeId);
+      return lagret;
     },
+
+    // Lagrer et bilde (en Blob) og gir ID-en det fikk. Kaster en feil hvis det ikke gikk.
+    async lagreBilde(blob) {
+      const id = "bilde-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+      await iBildelageret("readwrite", lager => lager.put(blob, id));
+      return id;
+    },
+
+    // Gir bildet (en Blob), eller null hvis det ikke finnes
+    async hentBilde(id) {
+      try {
+        return (await iBildelageret("readonly", lager => lager.get(id))) ?? null;
+      } catch (feil) {
+        console.warn("Kunne ikke hente bilde:", feil);
+        return null;
+      }
+    },
+
+    slettBilde,
 
     // Den som bruker appen. Annonser med samme «eier» er brukerens egne.
     async hentBruker() {

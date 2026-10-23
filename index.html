@@ -247,6 +247,21 @@
 
     <div class="felter">
       <div class="felt bred">
+        <span class="felt-etikett" id="bilder-etikett">Bilder <span class="valgfritt">(valgfritt, opptil 4)</span></span>
+        <div class="bildevelger" role="group" aria-labelledby="bilder-etikett">
+          <ul class="bildeliste" id="bildeliste"></ul>
+          <label class="legg-til-bilde" id="legg-til-bilde">
+            <input type="file" id="felt-bilder" accept="image/*" multiple class="skjult-tekst" aria-describedby="bilder-hjelp">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 8h3l2-3h6l2 3h3v11H4z"></path><circle cx="12" cy="13" r="3.5"></circle>
+            </svg>
+            <span>Legg til bilder</span>
+          </label>
+        </div>
+        <span class="felt-hjelp" id="bilder-hjelp" aria-live="polite">Det første bildet blir forsidebildet. Vis gjerne understrekninger og slitasje.</span>
+      </div>
+
+      <div class="felt bred">
         <label for="felt-isbn">ISBN <span class="valgfritt">(valgfritt)</span></label>
         <div class="isbn-rad">
           <input type="text" id="felt-isbn" name="isbn" maxlength="20" inputmode="numeric" autocomplete="off"

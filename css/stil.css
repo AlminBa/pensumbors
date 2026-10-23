@@ -613,6 +613,18 @@ main {
   display: block;
   overflow-wrap: anywhere;
 }
+/* Bilde av boka over det genererte omslaget (som vises mens bildet lastes) */
+.omslag-bilde {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.omslag-bilde:not([src]) { visibility: hidden; }
+.omslag.har-bilde::before,
+.omslag.har-bilde::after { display: none; } /* ingen bokrygg eller stoffstruktur over bildet */
 /* «Kan sendes»-merke nederst på omslaget */
 .omslag-merke {
   position: absolute;
@@ -745,6 +757,33 @@ main {
 .detalj .omslag::before { width: 22px; }
 .detalj .omslag-kode { font-size: 2.1rem; }
 .detalj.er-solgt .omslag { filter: grayscale(0.85); opacity: 0.65; }
+
+/* Bildegalleri: bildet vises helt (ikke beskåret), med miniatyrer under */
+.galleri { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.galleri-hoved {
+  aspect-ratio: 3 / 4;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--kant);
+  box-shadow: 0 10px 30px rgba(19, 51, 38, 0.18);
+}
+.galleri-bilde { display: block; width: 100%; height: 100%; object-fit: contain; }
+.galleri-bilde:not([src]) { visibility: hidden; }
+.galleri-miniatyrer { display: flex; flex-wrap: wrap; gap: 8px; }
+.miniatyr {
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--kant);
+  cursor: pointer;
+}
+.miniatyr img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.miniatyr[aria-pressed="true"] { border-color: var(--gronn); }
+.miniatyr:focus-visible { outline: 3px solid var(--messing); outline-offset: 2px; }
+.detalj.er-solgt .galleri-hoved { filter: grayscale(0.85); opacity: 0.65; }
 
 .detalj-info { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .detalj-info .status { font-size: 0.85rem; padding: 6px 12px; }
@@ -949,6 +988,9 @@ main {
   overflow-wrap: anywhere;
 }
 .min-rad.er-solgt .min-omslag { filter: grayscale(0.85); opacity: 0.6; }
+.min-omslag { position: relative; overflow: hidden; }
+.min-omslag img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.min-omslag img:not([src]) { visibility: hidden; }
 .min-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .min-tittel {
   font-family: var(--serif);
@@ -1155,6 +1197,68 @@ dialog.skjema-dialog::backdrop {
   font-weight: 500;
 }
 .feilmelding:empty { display: none !important; }
+.felt-etikett { font-weight: 600; font-size: 0.93rem; }
+.bildevelger {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.bildeliste { display: flex; flex-wrap: wrap; gap: 10px; list-style: none; }
+.bildeliste:empty { display: none; }
+.skjemabilde,
+.legg-til-bilde {
+  position: relative;
+  width: 104px;
+  height: 104px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.skjemabilde img { display: block; width: 100%; height: 100%; object-fit: cover; background: var(--kant); }
+.skjemabilde img:not([src]) { visibility: hidden; }
+.forsidebilde-merke {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: 999px;
+  background: rgba(255, 253, 248, 0.95);
+  color: var(--gronn-mork);
+}
+.fjern-bilde {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(30, 42, 35, 0.75);
+  color: #fff;
+  cursor: pointer;
+}
+.fjern-bilde svg { width: 14px; height: 14px; }
+.fjern-bilde:focus-visible { outline: 3px solid var(--messing); outline-offset: 1px; }
+.legg-til-bilde {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 2px dashed #CFC6B6;
+  background: var(--kort);
+  color: var(--gronn);
+  font-size: 0.85rem;
+  text-align: center;
+  cursor: pointer;
+}
+.legg-til-bilde svg { width: 26px; height: 26px; }
+.legg-til-bilde:hover { border-color: var(--gronn); }
+.legg-til-bilde:focus-within { outline: 3px solid var(--messing); outline-offset: 2px; }
 .felt-hjelp {
   font-size: 0.85rem;
   color: var(--tekst-dempet);
@@ -1269,6 +1373,7 @@ dialog.skjema-dialog::backdrop {
 
   /* Detaljvisning: omslaget over teksten */
   .detalj { grid-template-columns: 1fr; gap: 24px; }
+  .galleri-hoved { aspect-ratio: 4 / 3; max-width: 520px; }
   .detalj .omslag {
     aspect-ratio: auto;
     height: 220px;
@@ -1356,6 +1461,7 @@ dialog.skjema-dialog::backdrop {
   .min-rad { gap: 12px; padding: 12px; }
   .min-status { flex-basis: 100%; } /* Rediger og Slett samlet på linjen under */
   .min-omslag { width: 56px; height: 76px; font-size: 0.68rem; }
+  .skjemabilde, .legg-til-bilde { width: 88px; height: 88px; }
   .detalj .omslag { height: 170px; max-width: none; }
   .detalj .omslag-kode { font-size: 1.6rem; }
   .detalj-tittel { font-size: 1.5rem; }

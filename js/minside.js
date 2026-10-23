@@ -20,6 +20,7 @@ function lagMinRad(a) {
     <li class="min-rad${status === "Solgt" ? " er-solgt" : ""}" data-id="${trygg(a.id)}">
       <div class="min-omslag" style="background:${omslagsfarge(a.emnekode)}" aria-hidden="true">
         <span>${trygg(a.emnekode)}</span>
+        ${a.bilder?.length ? `<img data-bilde="${trygg(a.bilder[0])}" alt="">` : ""}
       </div>
       <div class="min-info">
         <a class="min-tittel" href="${lenkeTil(a)}">${trygg(a.tittel)}</a>
@@ -48,6 +49,7 @@ function tegnMinSide() {
          Bøkene du legger ut, dukker opp her. Her kan du også redigere dem, markere dem som solgt og slette dem.
          <div><button type="button" class="knapp knapp-primar" data-handling="ny">Legg ut annonse</button></div>
        </div>`;
+  lastBilder(mineAnnonserListe);
 }
 
 function annonseFor(element) {

@@ -18,7 +18,7 @@ skjema.elements.larested.insertAdjacentHTML("beforeend", LARESTEDER.map(l =>
 // Åpner skjemaet for en ny annonse, eller for å redigere «annonse»
 function apneSkjema(annonse = null) {
   // Et halvferdig utkast til en ny annonse beholdes, men ikke feltene fra en redigering
-  if (annonse || redigererId) skjema.reset();
+  if (annonse || redigererId) nullstillSkjema();
   redigererId = annonse ? annonse.id : null;
   if (annonse) fyllSkjema(annonse);
   else fyllUtSelger();
@@ -26,12 +26,20 @@ function apneSkjema(annonse = null) {
   sendKnapp.textContent = annonse ? "Lagre endringer" : "Legg ut annonse";
   fjernAlleFeil();
   isbnHjelp.textContent = ISBN_HJELPETEKST;
+  bildeHjelp.textContent = BILDE_HJELPETEKST;
+  tegnSkjemaBilder();
   dialog.showModal();
   document.body.classList.add("modal-apen");
   skjema.elements.isbn.focus();
 }
 function lukkSkjema() {
   dialog.close();
+}
+
+// Tømmer alle feltene, også bildene
+function nullstillSkjema() {
+  skjema.reset();
+  tomSkjemaBilder();
 }
 
 // Fyller ut skjemaet med en annonse som skal redigeres
@@ -42,6 +50,7 @@ function fyllSkjema(a) {
   }
   felt.pris.value = String(a.pris ?? "").replace(".", ",");
   felt.kanSendes.checked = Boolean(a.kanSendes);
+  skjemaBilder = (a.bilder ?? []).map(id => ({ id }));
 }
 
 // Navn og by fra din forrige annonse, så du slipper å skrive dem på nytt (som en profil)
@@ -57,6 +66,113 @@ document.getElementById("lukk-knapp").addEventListener("click", lukkSkjema);
 document.getElementById("avbryt-knapp").addEventListener("click", lukkSkjema);
 // Kjøres uansett hvordan skjemaet lukkes (også med Esc-tasten)
 dialog.addEventListener("close", () => document.body.classList.remove("modal-apen"));
+
+// ========== SKJEMA: BILDER ==========
+const MAKS_BILDER = 4;
+const bildeliste = document.getElementById("bildeliste");
+const leggTilBilde = document.getElementById("legg-til-bilde");
+const bildeInput = document.getElementById("felt-bilder");
+const bildeHjelp = document.getElementById("bilder-hjelp");
+const BILDE_HJELPETEKST = bildeHjelp.textContent;
+
+// Bildene i skjemaet, i rekkefølge: { id } for bilder som allerede er lagret, og
+// { blob, url } for nye bilder som lagres når skjemaet sendes inn.
+let skjemaBilder = [];
+let bildebehandling = Promise.resolve(); // nye bilder som fortsatt skaleres ned
+
+// Gjør et bilde mindre (maks 1200 px på den lengste siden) og lagrer det som JPEG,
+// så det tar lite plass og lastes fort
+async function skalerBilde(fil, maks = 1200) {
+  const url = URL.createObjectURL(fil);
+  try {
+    const bilde = new Image();
+    bilde.src = url;
+    await bilde.decode();
+    const skala = Math.min(1, maks / Math.max(bilde.naturalWidth, bilde.naturalHeight));
+    const lerret = document.createElement("canvas");
+    lerret.width = Math.round(bilde.naturalWidth * skala);
+    lerret.height = Math.round(bilde.naturalHeight * skala);
+    const tegning = lerret.getContext("2d");
+    tegning.fillStyle = "#fff"; // gjennomsiktige PNG-er får hvit bakgrunn i stedet for svart
+    tegning.fillRect(0, 0, lerret.width, lerret.height);
+    tegning.drawImage(bilde, 0, 0, lerret.width, lerret.height);
+    return await new Promise((ok, feil) =>
+      lerret.toBlob(blob => (blob ? ok(blob) : feil(new Error("Kunne ikke lage bildet"))), "image/jpeg", 0.82));
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+function tegnSkjemaBilder() {
+  bildeliste.innerHTML = skjemaBilder.map((b, i) => `
+    <li class="skjemabilde">
+      <img ${b.url ? `src="${b.url}"` : `data-bilde="${trygg(b.id)}"`} alt="Bilde ${i + 1}">
+      ${i === 0 ? '<span class="forsidebilde-merke">Forsidebilde</span>' : ""}
+      <button type="button" class="fjern-bilde" data-fjern-bilde="${i}" aria-label="Fjern bilde ${i + 1}">${kryssIkon}</button>
+    </li>`).join("");
+  lastBilder(bildeliste);
+  leggTilBilde.hidden = skjemaBilder.length >= MAKS_BILDER;
+}
+
+// Fjerner bildene fra skjemaet. Forhåndsvisninger av nye, ulagrede bilder frigjøres.
+function tomSkjemaBilder() {
+  for (const b of skjemaBilder) if (b.blob) URL.revokeObjectURL(b.url);
+  skjemaBilder = [];
+}
+
+bildeInput.addEventListener("change", () => {
+  const filer = [...bildeInput.files];
+  bildeInput.value = ""; // så samme bilde kan velges igjen senere
+  bildebehandling = (async () => {
+    const plass = MAKS_BILDER - skjemaBilder.length;
+    const ulesbare = [];
+    for (const fil of filer.slice(0, plass)) {
+      try {
+        const blob = await skalerBilde(fil);
+        skjemaBilder.push({ blob, url: URL.createObjectURL(blob) });
+      } catch {
+        ulesbare.push(`«${fil.name}»`);
+      }
+    }
+    tegnSkjemaBilder();
+    const forMange = filer.length - plass;
+    if (forMange > 0) {
+      bildeHjelp.textContent = `Du kan ha opptil ${MAKS_BILDER} bilder, så ${forMange === 1 ? "ett bilde" : `${forMange} bilder`} ble ikke lagt til.`;
+    } else if (ulesbare.length) {
+      bildeHjelp.textContent = `Kunne ikke lese ${ulesbare.join(", ")}. Prøv et JPG- eller PNG-bilde.`;
+    } else {
+      bildeHjelp.textContent = `${filer.length === 1 ? "Bildet" : "Bildene"} er lagt til. Det første bildet blir forsidebildet.`;
+    }
+  })();
+});
+
+bildeliste.addEventListener("click", e => {
+  const knapp = e.target.closest("[data-fjern-bilde]");
+  if (!knapp) return;
+  const nr = Number(knapp.dataset.fjernBilde);
+  const [fjernet] = skjemaBilder.splice(nr, 1);
+  if (fjernet.blob) URL.revokeObjectURL(fjernet.url);
+  tegnSkjemaBilder();
+  bildeHjelp.textContent = `Bilde ${nr + 1} er fjernet.`;
+  // Fokus til «Fjern» på bildet som nå står på samme plass, eller til «Legg til bilder»
+  const knapper = bildeliste.querySelectorAll("[data-fjern-bilde]");
+  (knapper[Math.min(nr, knapper.length - 1)] ?? bildeInput).focus();
+});
+
+// Lagrer de nye bildene i datalaget og gir ID-ene til alle bildene i skjemaet, i rekkefølge.
+// Kaster en feil hvis et bilde ikke kunne lagres.
+async function lagreSkjemaBilder() {
+  const ider = [];
+  for (const b of skjemaBilder) {
+    if (!b.id) {
+      b.id = await Data.lagreBilde(b.blob);
+      bildeUrler.set(b.id, b.url); // forhåndsvisningen brukes videre som bildets adresse
+      delete b.blob;
+    }
+    ider.push(b.id);
+  }
+  return ider;
+}
 
 // ========== SKJEMA: VALIDERING ==========
 // Gjør om tekst som «1 200», «350,50» eller «350 kr» til et tall. Gir null hvis ugyldig.
@@ -187,8 +303,11 @@ skjema.elements.isbn.addEventListener("keydown", e => {
 });
 
 // ========== SKJEMA: SENDE INN ==========
+let senderInn = false; // hindrer at et dobbeltklikk legger ut annonsen to ganger
+
 skjema.addEventListener("submit", async e => {
   e.preventDefault();
+  if (senderInn) return;
 
   // Sjekk alle felt og husk det første med feil
   let forsteFeil = null;
@@ -202,14 +321,36 @@ skjema.addEventListener("submit", async e => {
     return;
   }
 
+  senderInn = true;
+  try {
+    await sendInn();
+  } finally {
+    senderInn = false;
+  }
+});
+
+async function sendInn() {
+  // Bildene lagres først, så annonsen aldri peker på bilder som ikke finnes
+  await bildebehandling;
+  let bilder;
+  let bildefeil = false;
+  try {
+    bilder = await lagreSkjemaBilder();
+  } catch (feil) {
+    console.warn("Kunne ikke lagre bilder:", feil);
+    bildefeil = true;
+    bilder = skjemaBilder.filter(b => b.id).map(b => b.id);
+  }
+
   if (redigererId) {
-    await lagreEndringer();
+    await lagreEndringer(bilder, bildefeil);
     return;
   }
 
   const nyAnnonse = {
     id: nyId(),
     ...lesSkjema(),
+    bilder,
     eier: bruker.id,
     dato: dagensDato(),
     opprettet: Date.now(),
@@ -218,7 +359,7 @@ skjema.addEventListener("submit", async e => {
 
   annonser.unshift(nyAnnonse);
 
-  skjema.reset();
+  nullstillSkjema();
   lukkSkjema();
 
   // Gå til alle annonser, tøm søk og filtre og sorter på nyeste, slik at den nye annonsen synes øverst
@@ -233,24 +374,27 @@ skjema.addEventListener("submit", async e => {
   window.scrollTo({ top: 0, behavior: "smooth" });
 
   const lagret = await Data.leggTilAnnonse(nyAnnonse);
-  if (lagret) {
-    visMelding("Annonsen din er lagt ut.");
-  } else {
+  if (!lagret) {
     visMelding("Annonsen er lagt ut, men kunne ikke lagres i nettleseren. Den forsvinner hvis du laster inn siden på nytt.", 6000);
+  } else if (bildefeil) {
+    visMelding("Annonsen er lagt ut, men bildene kunne ikke lagres i nettleseren.", 6000);
+  } else {
+    visMelding("Annonsen din er lagt ut.");
   }
-});
+}
 
 // ========== SKJEMA: LAGRE ENDRINGER ==========
-async function lagreEndringer() {
+async function lagreEndringer(bilder, bildefeil) {
   const a = annonser.find(x => x.id === redigererId);
   redigererId = null;
   if (!a || !erMin(a)) {
     lukkSkjema();
     return;
   }
-  const endringer = { ...lesSkjema(), endret: Date.now() };
+  const fjernedeBilder = (a.bilder ?? []).filter(id => !bilder.includes(id));
+  const endringer = { ...lesSkjema(), bilder, endret: Date.now() };
   Object.assign(a, endringer);
-  skjema.reset();
+  nullstillSkjema();
   lukkSkjema();
   byggValg(); // byen eller lærestedet kan være endret
   tegnPaNytt();
@@ -262,5 +406,12 @@ async function lagreEndringer() {
   if (rediger) rediger.focus();
 
   const lagret = await Data.oppdaterAnnonse(a.id, endringer);
-  visMelding(lagret ? "Endringene er lagret." : "Endringene ble gjort, men kunne ikke lagres i nettleseren.");
+  if (lagret) {
+    for (const id of fjernedeBilder) {
+      await Data.slettBilde(id);
+      glemBilde(id);
+    }
+  }
+  visMelding(!lagret ? "Endringene ble gjort, men kunne ikke lagres i nettleseren."
+    : bildefeil ? "Endringene er lagret, men nye bilder kunne ikke lagres." : "Endringene er lagret.");
 }
