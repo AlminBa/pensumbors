@@ -2340,14 +2340,27 @@
     return tall > 0 ? tall : null;
   }
 
+  const MAKSPRIS = 10000; // en høyere pris er nesten alltid en skrivefeil
+
+  // «mat 1100» → «MAT1100»
+  function rensEmnekode(tekst) {
+    return String(tekst).toUpperCase().replace(/\s+/g, "");
+  }
+
   // Én regel per felt. Hver regel gir en feilmelding, eller tom tekst hvis alt er i orden.
   const REGLER = {
     tittel:    v => v ? "" : "Skriv inn tittelen på boken.",
     forfatter: v => v ? "" : "Skriv inn hvem som har skrevet boken.",
-    emnekode:  v => v ? "" : "Skriv inn emnekoden, for eksempel MAT1100.",
+    emnekode:  v => {
+      if (!v) return "Skriv inn emnekoden, for eksempel MAT1100.";
+      if (!/^[A-ZÆØÅ0-9-]+$/.test(rensEmnekode(v))) return "Emnekoden kan bare inneholde bokstaver, tall og bindestrek.";
+      return "";
+    },
     pris:      v => {
       if (!v) return "Skriv inn en pris.";
-      if (tolkPris(v) === null) return "Prisen må være et tall større enn 0, for eksempel 350.";
+      const tall = tolkPris(v);
+      if (tall === null) return "Prisen må være et tall større enn 0, for eksempel 350.";
+      if (tall > MAKSPRIS) return `Prisen kan ikke være høyere enn ${formaterPris(MAKSPRIS)}.`;
       return "";
     },
     tilstand:  v => v ? "" : "Velg hvilken tilstand boken er i.",
@@ -2400,7 +2413,7 @@
       id: nyId(),
       tittel: verdi("tittel"),
       forfatter: verdi("forfatter"),
-      emnekode: verdi("emnekode").toUpperCase().replace(/\s+/g, ""), // «mat 1100» → «MAT1100»
+      emnekode: rensEmnekode(verdi("emnekode")),
       pris: tolkPris(verdi("pris")),
       tilstand: verdi("tilstand"),
       by: verdi("by"),
